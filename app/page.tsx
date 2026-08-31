@@ -1,7 +1,9 @@
 'use client';
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { Download, IdCard, ImagePlus, Printer, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Download, IdCard, ImagePlus, Printer, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +28,8 @@ export default function Home() {
   const [details, setDetails] = useState(initialDetails);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [ready, setReady] = useState(false);
+  const [exporting, setExporting] = useState<'pdf' | 'print' | null>(null);
+  const [notice, setNotice] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const image = new Image(); image.src = '/id-card-template.png';
@@ -59,13 +63,45 @@ export default function Home() {
     const file = event.target.files?.[0]; if (!file) return; const url = URL.createObjectURL(file); const image = new Image();
     image.onload = () => { setPhoto(image); URL.revokeObjectURL(url); }; image.src = url;
   }
-  async function downloadPdf() {
-    const canvas = canvasRef.current; if (!canvas) return; const { jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [54, 87] }); pdf.addImage(canvas.toDataURL('image/png', 1), 'PNG', 0, 0, 54, 87, undefined, 'FAST');
-    const safeName = (details.name || 'employee').trim().replace(/[^a-z0-9]+/gi, '-').toLowerCase(); pdf.save(`${safeName}-id-card.pdf`);
+  function downloadPdf() {
+    const canvas = canvasRef.current;
+    if (!canvas || !ready) return;
+    setExporting('pdf'); setNotice(null);
+    try {
+      const image = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [54, 87], compress: true });
+      pdf.addImage(image, 'JPEG', 0, 0, 54, 87, undefined, 'FAST');
+      const safeName = (details.name || 'employee').trim().replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+      pdf.save(`${safeName}-id-card.pdf`);
+      setNotice({ kind: 'success', message: 'PDF downloaded successfully.' });
+    } catch (error) {
+      console.error('PDF export failed', error);
+      setNotice({ kind: 'error', message: 'PDF could not be created. Please refresh the page and try again.' });
+    } finally { setExporting(null); }
   }
-  function downloadPng() {
-    const canvas = canvasRef.current; if (!canvas) return; const link = document.createElement('a'); link.download = `${details.employeeNo || 'employee'}-id-card.png`; link.href = canvas.toDataURL('image/png', 1); link.click();
+
+  function printCard() {
+    const canvas = canvasRef.current;
+    if (!canvas || !ready) return;
+    setExporting('print'); setNotice(null);
+    const printWindow = window.open('', '_blank', 'width=720,height=900');
+    if (!printWindow) {
+      setExporting(null);
+      setNotice({ kind: 'error', message: 'Printing was blocked. Please allow pop-ups for this site and try again.' });
+      return;
+    }
+    try {
+      const image = canvas.toDataURL('image/jpeg', 0.98);
+      printWindow.document.open();
+      printWindow.document.write(`<!doctype html><html><head><title>Print employee ID card</title><style>@page{size:54mm 87mm;margin:0}html,body{margin:0;width:54mm;height:87mm}img{display:block;width:54mm;height:87mm;object-fit:fill}@media screen{body{margin:20px auto;box-shadow:0 10px 35px #0003}}</style></head><body><img src="${image}" alt="Employee ID card"></body></html>`);
+      printWindow.document.close();
+      const output = printWindow.document.querySelector('img');
+      if (output) output.onload = () => { printWindow.focus(); printWindow.print(); };
+      setNotice({ kind: 'success', message: 'Print window opened at 54 × 87 mm.' });
+    } catch (error) {
+      console.error('Print failed', error); printWindow.close();
+      setNotice({ kind: 'error', message: 'The print window could not be prepared. Please refresh and try again.' });
+    } finally { setExporting(null); }
   }
 
   return <main className="min-h-screen bg-[#f1f5f8] text-[#17222d]">
@@ -83,7 +119,8 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-3"><Field label="Employee number" id="employeeNo"><Input id="employeeNo" value={details.employeeNo} onChange={update('employeeNo')} maxLength={14} /></Field><Field label="Date of joining" id="joiningDate"><Input id="joiningDate" type="date" value={details.joiningDate} onChange={update('joiningDate')} /></Field></div>
           <Field label="Blood group" id="bloodGroup"><Input id="bloodGroup" value={details.bloodGroup} onChange={update('bloodGroup')} placeholder="e.g. B+ve" maxLength={8} /></Field>
         </div>
-        <div className="mt-6 grid grid-cols-[1fr_auto] gap-3"><Button type="button" onClick={downloadPdf} disabled={!ready} className="h-11 bg-[#f37032] font-semibold text-white hover:bg-[#d95f25]"><Download size={17} /> Download print PDF</Button><Button type="button" onClick={downloadPng} variant="outline" className="h-11 px-3" aria-label="Download high-resolution PNG"><Printer size={17} /></Button></div>
+        {notice && <Alert variant={notice.kind === 'error' ? 'destructive' : 'default'} className={`mt-5 ${notice.kind === 'success' ? 'border-[#9ed4bf] bg-[#f0faf6] text-[#176a4d]' : ''}`}>{notice.kind === 'success' ? <CheckCircle2 /> : <TriangleAlert />}<AlertDescription>{notice.message}</AlertDescription></Alert>}
+        <div className="mt-6 grid grid-cols-[1fr_auto] gap-3"><Button type="button" onClick={downloadPdf} disabled={!ready || exporting !== null} className="h-11 bg-[#f37032] font-semibold text-white hover:bg-[#d95f25]"><Download size={17} /> {exporting === 'pdf' ? 'Preparing PDF…' : 'Download print PDF'}</Button><Button type="button" onClick={printCard} disabled={!ready || exporting !== null} variant="outline" className="h-11 px-3" aria-label="Print ID card"><Printer size={17} /></Button></div>
         <p className="mt-3 text-center text-xs text-[#71818d]">Output: 54 × 87 mm · high-resolution portrait PDF</p>
       </form>
       <section className="flex min-h-[620px] flex-col rounded-2xl border border-[#dce5eb] bg-[#e5ecf1] p-4 sm:p-7"><div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">Print preview</h2><p className="text-xs text-[#647585]">Based on your supplied Photoshop artwork</p></div><span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1668ad] shadow-sm">Front side</span></div><div className="grid flex-1 place-items-center overflow-hidden rounded-xl bg-[radial-gradient(circle_at_center,#f8fafb_0,#dbe4ea_100%)] p-4 sm:p-7"><canvas ref={canvasRef} width={2050} height={3310} aria-label="Employee ID card preview" className="h-auto max-h-[calc(100vh-190px)] w-auto max-w-full rounded-[10px] bg-white shadow-[0_24px_70px_rgba(29,52,69,.24)]" /></div></section>
