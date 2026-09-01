@@ -1,0 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = "dist/client"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["dist/server/**"]
+
+# Existing files in dist/client are served directly. All application routes
+# are rendered by the Vinext server bundle through this Netlify function.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/app"
+  status = 200
+
