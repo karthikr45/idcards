@@ -100,6 +100,9 @@ export default function Home() {
   }, [details, photo, logo, signature, ready]);
 
   const update = (key: keyof Details) => (event: ChangeEvent<HTMLInputElement>) => setDetails((current) => ({ ...current, [key]: event.target.value }));
+  const clearSampleOnFocus = (key: keyof Details) => (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (event.currentTarget.value === initialDetails[key]) setDetails((current) => ({ ...current, [key]: '' }));
+  };
   function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]; if (!file) return; const url = URL.createObjectURL(file); const image = new Image();
     image.onload = () => { setPhoto(image); URL.revokeObjectURL(url); }; image.src = url;
@@ -162,26 +165,26 @@ export default function Home() {
         <div className="mb-5 rounded-xl border border-dashed border-[#9db8cc] bg-[#f5f9fc] p-4"><Label htmlFor="photo" className="flex cursor-pointer items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={21} /></span><span><span className="block text-sm font-bold">Employee photograph <span className="text-[#d94c36]">*</span></span><span className="block text-xs font-normal text-[#6c7e8b]">JPG or PNG · portrait photo recommended</span></span></Label><Input id="photo" required type="file" accept="image/png,image/jpeg" onChange={selectPhoto} className="sr-only" /></div>
         <SectionTitle>Employee details</SectionTitle>
         <div className="grid gap-4">
-          <Field required label="Full name" id="name"><Input required id="name" value={details.name} onChange={update('name')} maxLength={32} /></Field>
-          <Field required label="Designation" id="designation"><Input required id="designation" value={details.designation} onChange={update('designation')} maxLength={42} /></Field>
-          <div className="grid grid-cols-2 gap-3"><Field required label="Employee number" id="employeeNo"><Input required id="employeeNo" value={details.employeeNo} onChange={update('employeeNo')} maxLength={14} /></Field><Field required label="Date of joining" id="joiningDate"><Input required id="joiningDate" type="date" value={details.joiningDate} onChange={update('joiningDate')} /></Field></div>
-          <Field required label="Blood group" id="bloodGroup"><Input required id="bloodGroup" value={details.bloodGroup} onChange={update('bloodGroup')} placeholder="e.g. B+ve" maxLength={8} /></Field>
+          <Field required label="Full name" id="name"><Input required id="name" value={details.name} onFocus={clearSampleOnFocus('name')} onChange={update('name')} maxLength={32} /></Field>
+          <Field required label="Designation" id="designation"><Input required id="designation" value={details.designation} onFocus={clearSampleOnFocus('designation')} onChange={update('designation')} maxLength={42} /></Field>
+          <div className="grid grid-cols-2 gap-3"><Field required label="Employee number" id="employeeNo"><Input required id="employeeNo" value={details.employeeNo} onFocus={clearSampleOnFocus('employeeNo')} onChange={update('employeeNo')} maxLength={14} /></Field><Field required label="Date of joining" id="joiningDate"><Input required id="joiningDate" type="date" value={details.joiningDate} onFocus={clearSampleOnFocus('joiningDate')} onChange={update('joiningDate')} /></Field></div>
+          <Field required label="Blood group" id="bloodGroup"><Input required id="bloodGroup" value={details.bloodGroup} onFocus={clearSampleOnFocus('bloodGroup')} onChange={update('bloodGroup')} placeholder="e.g. B+ve" maxLength={8} /></Field>
         </div>
 
         <SectionTitle>Company branding</SectionTitle>
         <div className="grid gap-4">
           <UploadField id="logo" label="Company logo" note="Optional PNG or JPG; company name is used when omitted"><Input id="logo" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setLogo)} className="sr-only" /></UploadField>
-          <Field required label="Company name" id="companyName"><Input required id="companyName" value={details.companyName} onChange={update('companyName')} maxLength={48} /></Field>
-          <Field label="Tagline" id="tagline"><Input id="tagline" value={details.tagline} onChange={update('tagline')} maxLength={50} /></Field>
-          <Field required label="Company address" id="address"><Textarea required id="address" value={details.address} onChange={(event) => setDetails((current) => ({ ...current, address: event.target.value }))} rows={3} maxLength={180} /></Field>
-          <Field required label="Website" id="website"><Input required id="website" value={details.website} onChange={update('website')} maxLength={55} /></Field>
+          <Field required label="Company name" id="companyName"><Input required id="companyName" value={details.companyName} onFocus={clearSampleOnFocus('companyName')} onChange={update('companyName')} maxLength={48} /></Field>
+          <Field label="Tagline" id="tagline"><Input id="tagline" value={details.tagline} onFocus={clearSampleOnFocus('tagline')} onChange={update('tagline')} maxLength={50} /></Field>
+          <Field required label="Company address" id="address"><Textarea required id="address" value={details.address} onFocus={clearSampleOnFocus('address')} onChange={(event) => setDetails((current) => ({ ...current, address: event.target.value }))} rows={3} maxLength={180} /></Field>
+          <Field required label="Website" id="website"><Input required id="website" value={details.website} onFocus={clearSampleOnFocus('website')} onChange={update('website')} maxLength={55} /></Field>
         </div>
 
         <SectionTitle>Issuing authority</SectionTitle>
         <div className="grid gap-4">
           <UploadField required id="signature" label="Authority signature" note="Transparent PNG recommended"><Input required id="signature" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setSignature)} className="sr-only" /></UploadField>
-          <Field required label="Authority name" id="authorityName"><Input required id="authorityName" value={details.authorityName} onChange={update('authorityName')} maxLength={34} /></Field>
-          <Field required label="Authority title" id="authorityTitle"><Input required id="authorityTitle" value={details.authorityTitle} onChange={update('authorityTitle')} maxLength={30} /></Field>
+          <Field required label="Authority name" id="authorityName"><Input required id="authorityName" value={details.authorityName} onFocus={clearSampleOnFocus('authorityName')} onChange={update('authorityName')} maxLength={34} /></Field>
+          <Field required label="Authority title" id="authorityTitle"><Input required id="authorityTitle" value={details.authorityTitle} onFocus={clearSampleOnFocus('authorityTitle')} onChange={update('authorityTitle')} maxLength={30} /></Field>
         </div>
         {notice && <Alert variant={notice.kind === 'error' ? 'destructive' : 'default'} className={`mt-5 ${notice.kind === 'success' ? 'border-[#9ed4bf] bg-[#f0faf6] text-[#176a4d]' : ''}`}>{notice.kind === 'success' ? <CheckCircle2 /> : <TriangleAlert />}<AlertDescription>{notice.message}</AlertDescription></Alert>}
         <div className="mt-6 grid grid-cols-[1fr_auto] gap-3"><Button type="button" onClick={downloadPdf} disabled={!ready || exporting !== null} className="h-11 bg-[#f37032] font-semibold text-white hover:bg-[#d95f25]"><Download size={17} /> {exporting === 'pdf' ? 'Preparing PDF…' : 'Download print PDF'}</Button><Button type="button" onClick={printCard} disabled={!ready || exporting !== null} variant="outline" className="h-11 px-3" aria-label="Print ID card"><Printer size={17} /></Button></div>
