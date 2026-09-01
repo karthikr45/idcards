@@ -11,13 +11,15 @@ import { Textarea } from '@/components/ui/textarea';
 
 type Details = {
   name: string; designation: string; employeeNo: string; joiningDate: string; bloodGroup: string;
-  companyName: string; tagline: string; address: string; website: string; authorityName: string; authorityTitle: string;
+  companyName: string; tagline: string; footerCompanyName: string; footerLine1: string; footerLine2: string; footerLine3: string;
+  website: string; authorityName: string; authorityTitle: string;
 };
 const initialDetails: Details = {
   name: 'EMPLOYEE NAME', designation: 'Job Designation', employeeNo: '00000', joiningDate: '2025-03-10', bloodGroup: 'B+ve',
   companyName: 'Caprus IT Private Limited', tagline: 'UNLOCKING SMART SOLUTIONS',
-  address: '2nd Floor, New Mark House, Patrika Nagar, Madhapur, Hyderabad – 81, Telangana', website: 'www.caprusit.com',
-  authorityName: 'Authorized Signatory', authorityTitle: 'Issuing Authority',
+  footerCompanyName: 'Caprus IT Private Limited', footerLine1: '2nd Floor, New Mark House,',
+  footerLine2: 'Plot Nos 48 to 51 & 54 to 57 of Survey Number 78,', footerLine3: 'Patrika Nagar, Madhapur, Hyd-81, TS. Ph: 040-4120 7879',
+  website: 'www.caprusit.com', authorityName: '', authorityTitle: 'Issuing Authority',
 };
 
 function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, weight = 700) {
@@ -37,11 +39,14 @@ function drawContainedImage(ctx: CanvasRenderingContext2D, image: HTMLImageEleme
   ctx.drawImage(image, x + (w - width) / 2, y + (h - height) / 2, width, height);
 }
 
-function drawWrappedText(ctx: CanvasRenderingContext2D, text: string, centerX: number, y: number, maxWidth: number, lineHeight: number) {
-  const words = text.trim().split(/\s+/); const lines: string[] = []; let line = '';
-  for (const word of words) { const next = line ? `${line} ${word}` : word; if (ctx.measureText(next).width > maxWidth && line) { lines.push(line); line = word; } else line = next; }
-  if (line) lines.push(line);
-  lines.slice(0, 3).forEach((value, index) => ctx.fillText(value, centerX, y + index * lineHeight));
+function drawTrackedText(ctx: CanvasRenderingContext2D, text: string, centerX: number, y: number, maxWidth: number, start: number, weight: number, tracking: number) {
+  let size = start; let widths: number[] = []; let total = 0;
+  do {
+    ctx.font = `${weight} ${size}px "Arial Narrow", Arial, Helvetica, sans-serif`;
+    widths = [...text].map((letter) => ctx.measureText(letter).width); total = widths.reduce((sum, width) => sum + width, 0) + tracking * Math.max(0, text.length - 1); size -= 2;
+  } while (total > maxWidth && size > 34);
+  ctx.textAlign = 'left'; let x = centerX - total / 2;
+  [...text].forEach((letter, index) => { ctx.fillText(letter, x, y); x += widths[index] + tracking; });
 }
 
 export default function Home() {
@@ -82,21 +87,23 @@ export default function Home() {
     }
     ctx.strokeStyle = '#494949'; ctx.lineWidth = 10; ctx.strokeRect(610, 770, 828, 1060);
     ctx.fillStyle = '#302e2e'; ctx.textAlign = 'center';
-    fitFont(ctx, details.name.toUpperCase(), 1580, 94, 800); ctx.fillText(details.name.toUpperCase(), 1024, 2028);
-    fitFont(ctx, details.designation, 1540, 66, 700); ctx.fillText(details.designation, 1024, 2170);
-    ctx.font = '400 60px Arial'; ctx.fillText('Emp.No.:', 790, 2302); ctx.font = '700 68px Arial'; ctx.textAlign = 'left'; ctx.fillText(details.employeeNo || '00000', 930, 2302);
-    ctx.font = '600 58px Arial'; ctx.fillText(`D.O.J.: ${formatDate(details.joiningDate)}`, 82, 2500); ctx.fillText(`Blood Group: ${details.bloodGroup || '—'}`, 82, 2618);
+    drawTrackedText(ctx, details.name.toUpperCase(), 1024, 2025, 1580, 86, 700, 1);
+    ctx.textAlign = 'center'; fitFont(ctx, details.designation, 1450, 62, 700); ctx.fillText(details.designation, 1024, 2166);
+    ctx.font = '500 56px Arial, Helvetica, sans-serif'; ctx.fillText('Emp.No.:', 790, 2296); ctx.font = '700 64px Arial, Helvetica, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(details.employeeNo || '00000', 930, 2296);
+    ctx.font = '600 54px Arial, Helvetica, sans-serif'; ctx.fillText(`D.O.J.: ${formatDate(details.joiningDate)}`, 82, 2496); ctx.fillText(`Blood Group: ${details.bloodGroup || '—'}`, 82, 2612);
 
     ctx.textAlign = 'center';
     if (signature) drawContainedImage(ctx, signature, 1390, 2310, 530, 160);
-    ctx.fillStyle = '#302e2e'; fitFont(ctx, details.authorityName, 610, 48, 700); ctx.fillText(details.authorityName, 1650, 2550);
-    ctx.font = '500 46px Arial'; ctx.fillText(details.authorityTitle, 1650, 2630);
+    ctx.fillStyle = '#302e2e';
+    if (details.authorityName) { fitFont(ctx, details.authorityName, 610, 42, 600); ctx.fillText(details.authorityName, 1650, 2545); }
+    ctx.font = '500 46px Arial, Helvetica, sans-serif'; ctx.fillText(details.authorityTitle, 1650, details.authorityName ? 2625 : 2615);
 
     ctx.fillStyle = '#1668ad'; ctx.fillRect(95, 2692, 1860, 18);
-    ctx.fillStyle = '#f37032'; fitFont(ctx, details.companyName, 1750, 70, 800); ctx.fillText(details.companyName, 1025, 2835);
-    ctx.fillStyle = '#302e2e'; ctx.font = '500 40px Arial'; drawWrappedText(ctx, details.address, 1025, 2935, 1800, 55);
+    ctx.fillStyle = '#f37032'; fitFont(ctx, details.footerCompanyName, 1750, 68, 700); ctx.fillText(details.footerCompanyName, 1025, 2828);
+    ctx.fillStyle = '#302e2e'; ctx.font = '500 39px Arial, Helvetica, sans-serif';
+    ctx.fillText(details.footerLine1, 1025, 2928); ctx.fillText(details.footerLine2, 1025, 2995); ctx.fillText(details.footerLine3, 1025, 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
-    ctx.fillStyle = '#fff'; fitFont(ctx, details.website, 1750, 68, 800); ctx.fillText(details.website, 1025, 3262);
+    ctx.fillStyle = '#fff'; fitFont(ctx, details.website, 1750, 64, 700); ctx.fillText(details.website, 1025, 3258);
   }, [details, photo, logo, signature, ready]);
 
   const update = (key: keyof Details) => (event: ChangeEvent<HTMLInputElement>) => setDetails((current) => ({ ...current, [key]: event.target.value }));
@@ -176,14 +183,21 @@ export default function Home() {
           <UploadField id="logo" label="Company logo" note="Optional PNG or JPG; company name is used when omitted"><Input id="logo" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setLogo)} className="sr-only" /></UploadField>
           <Field required label="Company name" id="companyName"><Input required id="companyName" value={details.companyName} onFocus={clearSampleOnFocus('companyName')} onChange={update('companyName')} maxLength={48} /></Field>
           <Field label="Tagline" id="tagline"><Input id="tagline" value={details.tagline} onFocus={clearSampleOnFocus('tagline')} onChange={update('tagline')} maxLength={50} /></Field>
-          <Field required label="Company address" id="address"><Textarea required id="address" value={details.address} onFocus={clearSampleOnFocus('address')} onChange={(event) => setDetails((current) => ({ ...current, address: event.target.value }))} rows={3} maxLength={180} /></Field>
+        </div>
+
+        <SectionTitle>Footer content</SectionTitle>
+        <div className="grid gap-4">
+          <Field required label="Footer company name" id="footerCompanyName"><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
+          <Field required label="Address line 1" id="footerLine1"><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={60} /></Field>
+          <Field required label="Address line 2" id="footerLine2"><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={68} /></Field>
+          <Field required label="Address line 3 / phone" id="footerLine3"><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={76} /></Field>
           <Field required label="Website" id="website"><Input required id="website" value={details.website} onFocus={clearSampleOnFocus('website')} onChange={update('website')} maxLength={55} /></Field>
         </div>
 
         <SectionTitle>Issuing authority</SectionTitle>
         <div className="grid gap-4">
           <UploadField required id="signature" label="Authority signature" note="Transparent PNG recommended"><Input required id="signature" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setSignature)} className="sr-only" /></UploadField>
-          <Field required label="Authority name" id="authorityName"><Input required id="authorityName" value={details.authorityName} onFocus={clearSampleOnFocus('authorityName')} onChange={update('authorityName')} maxLength={34} /></Field>
+          <Field label="Authority name (optional)" id="authorityName"><Input id="authorityName" value={details.authorityName} placeholder="Leave blank to match the original card" onFocus={clearSampleOnFocus('authorityName')} onChange={update('authorityName')} maxLength={34} /></Field>
           <Field required label="Authority title" id="authorityTitle"><Input required id="authorityTitle" value={details.authorityTitle} onFocus={clearSampleOnFocus('authorityTitle')} onChange={update('authorityTitle')} maxLength={30} /></Field>
         </div>
         {notice && <Alert variant={notice.kind === 'error' ? 'destructive' : 'default'} className={`mt-5 ${notice.kind === 'success' ? 'border-[#9ed4bf] bg-[#f0faf6] text-[#176a4d]' : ''}`}>{notice.kind === 'success' ? <CheckCircle2 /> : <TriangleAlert />}<AlertDescription>{notice.message}</AlertDescription></Alert>}
