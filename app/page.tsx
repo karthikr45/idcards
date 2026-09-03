@@ -29,9 +29,9 @@ const initialDetails: Details = {
 const initialTextStyles: Record<StyleKey, TextStyle> = {
   name: { font: 'Arial Narrow', bold: true }, designation: { font: 'Arial', bold: true },
   employeeNo: { font: 'Arial', bold: true }, joiningDate: { font: 'Arial', bold: true }, bloodGroup: { font: 'Arial', bold: true },
-  companyName: { font: 'Arial', bold: true }, tagline: { font: 'Arial', bold: false },
-  footerCompanyName: { font: 'Arial', bold: true }, footerLine1: { font: 'Arial', bold: false }, footerLine2: { font: 'Arial', bold: false }, footerLine3: { font: 'Arial', bold: false },
-  website: { font: 'Arial', bold: true }, authorityName: { font: 'Arial', bold: false }, authorityTitle: { font: 'Arial', bold: false },
+  companyName: { font: 'Arial', bold: true }, tagline: { font: 'Arial', bold: true },
+  footerCompanyName: { font: 'Arial', bold: true }, footerLine1: { font: 'Arial', bold: true }, footerLine2: { font: 'Arial', bold: true }, footerLine3: { font: 'Arial', bold: true },
+  website: { font: 'Arial', bold: true }, authorityName: { font: 'Arial', bold: true }, authorityTitle: { font: 'Arial', bold: true },
 };
 
 function canvasFont(style: TextStyle, size: number) {
@@ -67,11 +67,19 @@ function drawTrackedText(ctx: CanvasRenderingContext2D, text: string, centerX: n
 
 function drawEmployeeNumber(ctx: CanvasRenderingContext2D, value: string, centerX: number, y: number, style: TextStyle) {
   const label = 'Emp.No.:'; const number = value || '00000'; const gap = 18;
-  ctx.font = canvasFont(style, 56); const labelWidth = ctx.measureText(label).width;
+  const labelStyle = { ...style, bold: false };
+  ctx.font = canvasFont(labelStyle, 56); const labelWidth = ctx.measureText(label).width;
   ctx.font = canvasFont(style, 64); const numberWidth = ctx.measureText(number).width;
   let x = centerX - (labelWidth + gap + numberWidth) / 2;
-  ctx.textAlign = 'left'; ctx.font = canvasFont(style, 56); ctx.fillText(label, x, y);
+  ctx.textAlign = 'left'; ctx.font = canvasFont(labelStyle, 56); ctx.fillText(label, x, y);
   x += labelWidth + gap; ctx.font = canvasFont(style, 64); ctx.fillText(number, x, y);
+}
+
+function drawLabeledValue(ctx: CanvasRenderingContext2D, label: string, value: string, x: number, y: number, style: TextStyle) {
+  const labelStyle = { ...style, bold: false }; const gap = 14;
+  ctx.textAlign = 'left'; ctx.font = canvasFont(labelStyle, 54); ctx.fillText(label, x, y);
+  const valueX = x + ctx.measureText(label).width + gap;
+  ctx.font = canvasFont(style, 54); ctx.fillText(value, valueX, y);
 }
 
 export default function Home() {
@@ -116,8 +124,8 @@ export default function Home() {
     drawTrackedText(ctx, details.name.toUpperCase(), 1024, 2025, 1580, 86, textStyles.name, 1);
     ctx.textAlign = 'center'; fitFont(ctx, details.designation, 1450, 62, textStyles.designation); ctx.fillText(details.designation, 1024, 2166);
     drawEmployeeNumber(ctx, details.employeeNo, 1024, 2296, textStyles.employeeNo);
-    ctx.textAlign = 'left'; ctx.font = canvasFont(textStyles.joiningDate, 54); ctx.fillText(`D.O.J.: ${formatDate(details.joiningDate)}`, 82, 2496);
-    ctx.font = canvasFont(textStyles.bloodGroup, 54); ctx.fillText(`Blood Group: ${details.bloodGroup || '—'}`, 82, 2612);
+    drawLabeledValue(ctx, 'D.O.J.:', formatDate(details.joiningDate), 82, 2496, textStyles.joiningDate);
+    drawLabeledValue(ctx, 'Blood Group:', details.bloodGroup || '—', 82, 2612, textStyles.bloodGroup);
 
     ctx.textAlign = 'center';
     if (signature) drawContainedImage(ctx, signature, 1390, 2310, 530, 160);
