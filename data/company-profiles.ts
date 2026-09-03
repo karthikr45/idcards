@@ -1,5 +1,5 @@
 export type CompanyProfile = {
-  id: 'aauti' | 'caprus-digital' | 'caprus-it' | 'mentha';
+  id: 'aauti' | 'caprus-digital' | 'caprus-it' | 'menthra';
   label: string;
   companyName: string;
   tagline: string;
@@ -38,9 +38,10 @@ export const companyProfiles: CompanyProfile[] = [
     footerCompanyColor: '#f37032', logoPath: '/companies/caprus-it-logo.png', signaturePath: sharedAuthoritySignaturePath,
   },
   {
-    id: 'mentha', label: 'Mentha', companyName: 'Mentha', tagline: '', footerCompanyName: 'Mentha',
-    footerLine1: '', footerLine2: '', footerLine3: '', website: '', authorityName: '', authorityTitle: 'Issuing Authority',
-    footerCompanyColor: '#f37032', logoPath: null, signaturePath: sharedAuthoritySignaturePath,
+    id: 'menthra', label: 'Menthra', companyName: 'Menthra', tagline: '', footerCompanyName: 'MENTHRA INDIA Private Limited',
+    footerLine1: '1-2-32, 505 A Block, Vertex Sadguru Krupa,', footerLine2: 'Nizampet, Qutubullapur, Hyderabad- 500090, Telangana',
+    footerLine3: '', website: 'www.menthra.ai', authorityName: '', authorityTitle: 'Issuing Authority',
+    footerCompanyColor: '#f37032', logoPath: '/companies/menthra-logo.png', signaturePath: sharedAuthoritySignaturePath,
   },
 ];
 
