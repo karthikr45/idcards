@@ -23,8 +23,9 @@ type AddressKey = 'footerLine1' | 'footerLine2' | 'footerLine3';
 type AddressLayout = { size: number; align: 'left' | 'center' | 'right' };
 const fontChoices: FontChoice[] = ['Arial', 'Arial Narrow', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman'];
 const fontSizes = [24, 28, 32, 36, 40, 44, 48, 52];
+const bloodGroups = ['A+ve', 'A-ve', 'B+ve', 'B-ve', 'AB+ve', 'AB-ve', 'O+ve', 'O-ve'];
 const initialDetails: Details = {
-  name: 'EMPLOYEE NAME', designation: 'Job Designation', employeeNo: '00000', joiningDate: '2025-03-10', bloodGroup: 'B+ve',
+  name: 'EMPLOYEE NAME', designation: 'Job Designation', employeeNo: '00000', joiningDate: '', bloodGroup: 'B+ve',
   companyName: defaultCompanyProfile.companyName, tagline: defaultCompanyProfile.tagline,
   footerCompanyName: defaultCompanyProfile.footerCompanyName, footerLine1: defaultCompanyProfile.footerLine1,
   footerLine2: defaultCompanyProfile.footerLine2, footerLine3: defaultCompanyProfile.footerLine3,
@@ -48,7 +49,7 @@ function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
 }
 
 function formatDate(value: string) {
-  if (!value) return 'DD-MMM-YYYY';
+  if (!value) return '—';
   const [year, month, day] = value.split('-').map(Number);
   return new Date(year, month - 1, day).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replaceAll(' ', '-').toUpperCase();
 }
@@ -93,7 +94,7 @@ export default function Home() {
   const [selectedCompany, setSelectedCompany] = useState(defaultCompanyProfile.id);
   const [textStyles, setTextStyles] = useState(initialTextStyles);
   const [addressLayouts, setAddressLayouts] = useState<Record<AddressKey, AddressLayout>>({
-    footerLine1: { size: 44, align: 'center' }, footerLine2: { size: 44, align: 'center' }, footerLine3: { size: 44, align: 'center' },
+    footerLine1: { size: 52, align: 'center' }, footerLine2: { size: 52, align: 'center' }, footerLine3: { size: 52, align: 'center' },
   });
   const [footerCompanyColor, setFooterCompanyColor] = useState(defaultCompanyProfile.footerCompanyColor);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
@@ -261,7 +262,7 @@ export default function Home() {
     <section className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 lg:grid-cols-[minmax(340px,430px)_minmax(0,1fr)] lg:px-8">
       <form className="h-fit rounded-2xl border border-[#dce5eb] bg-white p-5 shadow-sm" onSubmit={(event) => event.preventDefault()}>
         <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-[#f37032]">New employee</p><h1 className="mt-1 text-2xl font-bold tracking-tight">Prepare an ID card</h1><p className="mt-2 text-sm leading-6 text-[#667785]">Upload a clear portrait and enter the approved HR details. Choose a font and use <strong>B</strong> beside any field to control its printed style.</p></div>
-        <div className="mb-5 grid gap-1.5"><Label htmlFor="companyProfile" className="text-xs font-bold text-[#263f51]">Company <span className="text-[#d94c36]">*</span></Label><NativeSelect id="companyProfile" aria-label="Company profile" value={selectedCompany} onChange={(event) => selectCompany(event.target.value)} className="h-11 font-semibold">{companyProfiles.map((profile: CompanyProfile) => <NativeSelectOption key={profile.id} value={profile.id}>{profile.label}</NativeSelectOption>)}</NativeSelect><p className="text-[11px] text-[#70818d]">Loads the saved company branding, address, website, and issuing authority.</p></div>
+        <div className="mb-5 grid gap-1.5"><Label htmlFor="companyProfile" className="text-xs font-bold text-[#263f51]">Company <span className="text-[#d94c36]">*</span></Label><NativeSelect id="companyProfile" aria-label="Company profile" value={selectedCompany} onChange={(event) => selectCompany(event.target.value)} className="h-11 w-full font-semibold">{companyProfiles.map((profile: CompanyProfile) => <NativeSelectOption key={profile.id} value={profile.id}>{profile.label}</NativeSelectOption>)}</NativeSelect><p className="text-[11px] text-[#70818d]">Loads the saved company branding, address, website, and issuing authority.</p></div>
         <div className="mb-5"><UploadField required id="photo" label="Employee photograph" note="JPG or PNG · portrait photo recommended" previewSrc={photo?.src} status={photoFileName}><Input id="photo" required type="file" accept="image/png,image/jpeg" onChange={selectPhoto} className="sr-only" /></UploadField></div>
         <SectionTitle>Employee details</SectionTitle>
         <div className="grid gap-4">
@@ -269,7 +270,7 @@ export default function Home() {
           <Field required label="Designation" id="designation" {...typography('designation')}><Input required id="designation" value={details.designation} onFocus={clearSampleOnFocus('designation')} onChange={update('designation')} maxLength={42} /></Field>
           <Field required label="Employee number" id="employeeNo" {...typography('employeeNo')}><Input required id="employeeNo" value={details.employeeNo} onFocus={clearSampleOnFocus('employeeNo')} onChange={update('employeeNo')} maxLength={14} /></Field>
           <Field required label="Date of joining" id="joiningDate" {...typography('joiningDate')}><Input required id="joiningDate" type="date" value={details.joiningDate} onFocus={clearSampleOnFocus('joiningDate')} onChange={update('joiningDate')} /></Field>
-          <Field required label="Blood group" id="bloodGroup" {...typography('bloodGroup')}><Input required id="bloodGroup" value={details.bloodGroup} onFocus={clearSampleOnFocus('bloodGroup')} onChange={update('bloodGroup')} placeholder="e.g. B+ve" maxLength={8} /></Field>
+          <Field required label="Blood group" id="bloodGroup" {...typography('bloodGroup')}><NativeSelect id="bloodGroup" aria-label="Blood group" value={details.bloodGroup} onChange={(event) => setDetails((current) => ({ ...current, bloodGroup: event.target.value }))} className="h-10 w-full"><NativeSelectOption value="" disabled>Select blood group</NativeSelectOption>{bloodGroups.map((group) => <NativeSelectOption key={group} value={group}>{group}</NativeSelectOption>)}</NativeSelect></Field>
         </div>
 
         <SectionTitle>Company branding</SectionTitle>
