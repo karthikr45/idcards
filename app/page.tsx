@@ -38,9 +38,9 @@ function canvasFont(style: TextStyle, size: number) {
   return `${style.bold ? 700 : 400} ${size}px "${style.font}", Arial, Helvetica, sans-serif`;
 }
 
-function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, style: TextStyle) {
+function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, style: TextStyle, minimum = 34) {
   let size = start;
-  do { ctx.font = canvasFont(style, size); size -= 2; } while (ctx.measureText(text).width > maxWidth && size > 34);
+  do { ctx.font = canvasFont(style, size); size -= 2; } while (ctx.measureText(text).width > maxWidth && size > minimum);
 }
 
 function formatDate(value: string) {
@@ -67,19 +67,19 @@ function drawTrackedText(ctx: CanvasRenderingContext2D, text: string, centerX: n
 
 function drawEmployeeNumber(ctx: CanvasRenderingContext2D, value: string, centerX: number, y: number, style: TextStyle) {
   const label = 'Emp.No.:'; const number = value || '00000'; const gap = 18;
-  const labelStyle = { ...style, bold: false };
+  const labelStyle = { ...style, bold: true };
   ctx.font = canvasFont(labelStyle, 56); const labelWidth = ctx.measureText(label).width;
-  ctx.font = canvasFont(style, 64); const numberWidth = ctx.measureText(number).width;
+  ctx.font = canvasFont(style, 68); const numberWidth = ctx.measureText(number).width;
   let x = centerX - (labelWidth + gap + numberWidth) / 2;
   ctx.textAlign = 'left'; ctx.font = canvasFont(labelStyle, 56); ctx.fillText(label, x, y);
-  x += labelWidth + gap; ctx.font = canvasFont(style, 64); ctx.fillText(number, x, y);
+  x += labelWidth + gap; ctx.font = canvasFont(style, 68); ctx.fillText(number, x, y);
 }
 
 function drawLabeledValue(ctx: CanvasRenderingContext2D, label: string, value: string, x: number, y: number, style: TextStyle) {
-  const labelStyle = { ...style, bold: false }; const gap = 14;
+  const labelStyle = { ...style, bold: true }; const gap = 14;
   ctx.textAlign = 'left'; ctx.font = canvasFont(labelStyle, 54); ctx.fillText(label, x, y);
   const valueX = x + ctx.measureText(label).width + gap;
-  ctx.font = canvasFont(style, 54); ctx.fillText(value, valueX, y);
+  ctx.font = canvasFont(style, 59); ctx.fillText(value, valueX, y);
 }
 
 export default function Home() {
@@ -128,16 +128,16 @@ export default function Home() {
     drawLabeledValue(ctx, 'Blood Group:', details.bloodGroup || '—', 82, 2612, textStyles.bloodGroup);
 
     ctx.textAlign = 'center';
-    if (signature) drawContainedImage(ctx, signature, 1390, 2310, 530, 160);
+    if (signature) drawContainedImage(ctx, signature, 1390, 2380, 530, 170);
     ctx.fillStyle = '#302e2e';
-    if (details.authorityName) { fitFont(ctx, details.authorityName, 610, 42, textStyles.authorityName); ctx.fillText(details.authorityName, 1650, 2545); }
-    ctx.font = canvasFont(textStyles.authorityTitle, 46); ctx.fillText(details.authorityTitle, 1650, details.authorityName ? 2625 : 2615);
+    if (details.authorityName) { fitFont(ctx, details.authorityName, 610, 42, textStyles.authorityName); ctx.fillText(details.authorityName, 1650, 2570); }
+    ctx.font = canvasFont(textStyles.authorityTitle, 46); ctx.fillText(details.authorityTitle, 1650, details.authorityName ? 2630 : 2610);
 
     ctx.fillStyle = '#1668ad'; ctx.fillRect(95, 2692, 1860, 18);
     ctx.fillStyle = '#f37032'; fitFont(ctx, details.footerCompanyName, 1750, 68, textStyles.footerCompanyName); ctx.fillText(details.footerCompanyName, 1025, 2828);
-    ctx.fillStyle = '#302e2e'; ctx.font = canvasFont(textStyles.footerLine1, 39); ctx.fillText(details.footerLine1, 1025, 2928);
-    ctx.font = canvasFont(textStyles.footerLine2, 39); ctx.fillText(details.footerLine2, 1025, 2995);
-    ctx.font = canvasFont(textStyles.footerLine3, 39); ctx.fillText(details.footerLine3, 1025, 3062);
+    ctx.fillStyle = '#302e2e'; fitFont(ctx, details.footerLine1, 1900, 39, textStyles.footerLine1, 26); ctx.fillText(details.footerLine1, 1025, 2928);
+    fitFont(ctx, details.footerLine2, 1900, 39, textStyles.footerLine2, 26); ctx.fillText(details.footerLine2, 1025, 2995);
+    fitFont(ctx, details.footerLine3, 1900, 39, textStyles.footerLine3, 26); ctx.fillText(details.footerLine3, 1025, 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
     ctx.fillStyle = '#fff'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
   }, [details, textStyles, photo, logo, signature, ready]);
