@@ -43,6 +43,16 @@ function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
   do { ctx.font = canvasFont(style, size); size -= 2; } while (ctx.measureText(text).width > maxWidth && size > minimum);
 }
 
+function sharedFontSize(ctx: CanvasRenderingContext2D, lines: Array<{ text: string; style: TextStyle }>, maxWidth: number, start: number, minimum: number) {
+  let size = start;
+  while (size > minimum) {
+    const allFit = lines.every((line) => { ctx.font = canvasFont(line.style, size); return ctx.measureText(line.text).width <= maxWidth; });
+    if (allFit) return size;
+    size -= 1;
+  }
+  return minimum;
+}
+
 function formatDate(value: string) {
   if (!value) return 'DD-MMM-YYYY';
   const [year, month, day] = value.split('-').map(Number);
@@ -136,9 +146,14 @@ export default function Home() {
 
     ctx.fillStyle = '#1668ad'; ctx.fillRect(95, 2692, 1860, 18);
     ctx.fillStyle = footerCompanyColor; fitFont(ctx, details.footerCompanyName, 1750, 68, textStyles.footerCompanyName); ctx.fillText(details.footerCompanyName, 1025, 2828);
-    ctx.fillStyle = '#302e2e'; fitFont(ctx, details.footerLine1, 1900, 39, textStyles.footerLine1, 26); ctx.fillText(details.footerLine1, 1025, 2928);
-    ctx.textAlign = 'left'; fitFont(ctx, details.footerLine2, 1886, 39, textStyles.footerLine2, 26); ctx.fillText(details.footerLine2, 82, 2995);
-    fitFont(ctx, details.footerLine3, 1886, 39, textStyles.footerLine3, 26); ctx.fillText(details.footerLine3, 82, 3062);
+    const addressSize = sharedFontSize(ctx, [
+      { text: details.footerLine1, style: textStyles.footerLine1 },
+      { text: details.footerLine2, style: textStyles.footerLine2 },
+      { text: details.footerLine3, style: textStyles.footerLine3 },
+    ], 1886, 39, 26);
+    ctx.fillStyle = '#302e2e'; ctx.textAlign = 'center'; ctx.font = canvasFont(textStyles.footerLine1, addressSize); ctx.fillText(details.footerLine1, 1025, 2928);
+    ctx.textAlign = 'left'; ctx.font = canvasFont(textStyles.footerLine2, addressSize); ctx.fillText(details.footerLine2, 82, 2995);
+    ctx.font = canvasFont(textStyles.footerLine3, addressSize); ctx.fillText(details.footerLine3, 82, 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
     ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
   }, [details, textStyles, footerCompanyColor, photo, logo, signature, ready]);
