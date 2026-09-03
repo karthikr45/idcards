@@ -166,7 +166,7 @@ export default function Home() {
     ctx.textAlign = addressLayouts.footerLine3.align; ctx.font = canvasFont(textStyles.footerLine3, addressLayouts.footerLine3.size); ctx.fillText(details.footerLine3, addressX(addressLayouts.footerLine3.align), 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
     ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
-  }, [details, textStyles, addressLayouts, footerCompanyColor, photo, logo, signature, ready]);
+  }, [details, textStyles, addressLayouts, footerCompanyColor, photo, logo, signature, ready, authStatus]);
 
   const update = (key: keyof Details) => (event: ChangeEvent<HTMLInputElement>) => setDetails((current) => ({ ...current, [key]: event.target.value }));
   const typography = (key: StyleKey) => ({ textStyle: textStyles[key], onTextStyleChange: (next: TextStyle) => setTextStyles((current) => ({ ...current, [key]: next })) });
