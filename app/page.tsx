@@ -106,6 +106,8 @@ export default function Home() {
   useEffect(() => {
     const image = new Image(); image.src = '/id-card-template.png';
     image.onload = () => { templateRef.current = image; setReady(true); };
+    loadProfileArtwork(defaultCompanyProfile.logoPath, setLogo);
+    loadProfileArtwork(defaultCompanyProfile.signaturePath, setSignature);
   }, []);
 
   useEffect(() => {
