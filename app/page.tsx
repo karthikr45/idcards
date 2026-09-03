@@ -150,10 +150,10 @@ export default function Home() {
       { text: details.footerLine1, style: textStyles.footerLine1 },
       { text: details.footerLine2, style: textStyles.footerLine2 },
       { text: details.footerLine3, style: textStyles.footerLine3 },
-    ], 1886, 39, 26);
+    ], 1990, 44, 28);
     ctx.fillStyle = '#302e2e'; ctx.textAlign = 'center'; ctx.font = canvasFont(textStyles.footerLine1, addressSize); ctx.fillText(details.footerLine1, 1025, 2928);
-    ctx.textAlign = 'left'; ctx.font = canvasFont(textStyles.footerLine2, addressSize); ctx.fillText(details.footerLine2, 82, 2995);
-    ctx.font = canvasFont(textStyles.footerLine3, addressSize); ctx.fillText(details.footerLine3, 82, 3062);
+    ctx.textAlign = 'left'; ctx.font = canvasFont(textStyles.footerLine2, addressSize); ctx.fillText(details.footerLine2, 30, 2995);
+    ctx.font = canvasFont(textStyles.footerLine3, addressSize); ctx.fillText(details.footerLine3, 30, 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
     ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
   }, [details, textStyles, footerCompanyColor, photo, logo, signature, ready]);
@@ -242,9 +242,9 @@ export default function Home() {
         <SectionTitle>Footer content</SectionTitle>
         <div className="grid gap-4">
           <Field required label="Footer company name" id="footerCompanyName" color={footerCompanyColor} onColorChange={setFooterCompanyColor} {...typography('footerCompanyName')}><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
-          <Field required label="Address line 1" id="footerLine1" {...typography('footerLine1')}><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={60} /></Field>
-          <Field required label="Address line 2" id="footerLine2" {...typography('footerLine2')}><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={68} /></Field>
-          <Field required label="Address line 3 / phone" id="footerLine3" {...typography('footerLine3')}><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={76} /></Field>
+          <Field required label="Address line 1" id="footerLine1" {...typography('footerLine1')}><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={100} /></Field>
+          <Field required label="Address line 2" id="footerLine2" {...typography('footerLine2')}><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={100} /></Field>
+          <Field required label="Address line 3 / phone" id="footerLine3" {...typography('footerLine3')}><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={110} /></Field>
           <Field required label="Website" id="website" {...typography('website')}><Input required id="website" value={details.website} onFocus={clearSampleOnFocus('website')} onChange={update('website')} maxLength={55} /></Field>
         </div>
 
