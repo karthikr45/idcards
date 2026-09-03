@@ -20,7 +20,7 @@ export const companyProfiles: CompanyProfile[] = [
   {
     id: 'aauti', label: 'Aauti', companyName: 'Aauti', tagline: '', footerCompanyName: 'Aauti',
     footerLine1: '', footerLine2: '', footerLine3: '', website: '', authorityName: '', authorityTitle: 'Issuing Authority',
-    footerCompanyColor: '#f37032', logoPath: null, signaturePath: null,
+    footerCompanyColor: '#007bff', logoPath: '/companies/aauti-logo.svg', signaturePath: null,
   },
   {
     id: 'caprus-digital', label: 'Caprus Digital', companyName: 'Caprus Digital', tagline: '', footerCompanyName: 'Caprus Digital',
