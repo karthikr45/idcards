@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 
 type Details = {
@@ -14,6 +15,10 @@ type Details = {
   companyName: string; tagline: string; footerCompanyName: string; footerLine1: string; footerLine2: string; footerLine3: string;
   website: string; authorityName: string; authorityTitle: string;
 };
+type FontChoice = 'Arial' | 'Arial Narrow' | 'Helvetica' | 'Verdana' | 'Georgia' | 'Times New Roman';
+type TextStyle = { font: FontChoice; bold: boolean };
+type StyleKey = keyof Details;
+const fontChoices: FontChoice[] = ['Arial', 'Arial Narrow', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman'];
 const initialDetails: Details = {
   name: 'EMPLOYEE NAME', designation: 'Job Designation', employeeNo: '00000', joiningDate: '2025-03-10', bloodGroup: 'B+ve',
   companyName: 'Caprus IT Private Limited', tagline: 'UNLOCKING SMART SOLUTIONS',
@@ -21,10 +26,21 @@ const initialDetails: Details = {
   footerLine2: 'Plot Nos 48 to 51 & 54 to 57 of Survey Number 78,', footerLine3: 'Patrika Nagar, Madhapur, Hyd-81, TS. Ph: 040-4120 7879',
   website: 'www.caprusit.com', authorityName: '', authorityTitle: 'Issuing Authority',
 };
+const initialTextStyles: Record<StyleKey, TextStyle> = {
+  name: { font: 'Arial Narrow', bold: true }, designation: { font: 'Arial', bold: true },
+  employeeNo: { font: 'Arial', bold: true }, joiningDate: { font: 'Arial', bold: true }, bloodGroup: { font: 'Arial', bold: true },
+  companyName: { font: 'Arial', bold: true }, tagline: { font: 'Arial', bold: false },
+  footerCompanyName: { font: 'Arial', bold: true }, footerLine1: { font: 'Arial', bold: false }, footerLine2: { font: 'Arial', bold: false }, footerLine3: { font: 'Arial', bold: false },
+  website: { font: 'Arial', bold: true }, authorityName: { font: 'Arial', bold: false }, authorityTitle: { font: 'Arial', bold: false },
+};
 
-function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, weight = 700) {
+function canvasFont(style: TextStyle, size: number) {
+  return `${style.bold ? 700 : 400} ${size}px "${style.font}", Arial, Helvetica, sans-serif`;
+}
+
+function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, style: TextStyle) {
   let size = start;
-  do { ctx.font = `${weight} ${size}px Arial, Helvetica, sans-serif`; size -= 2; } while (ctx.measureText(text).width > maxWidth && size > 34);
+  do { ctx.font = canvasFont(style, size); size -= 2; } while (ctx.measureText(text).width > maxWidth && size > 34);
 }
 
 function formatDate(value: string) {
@@ -39,20 +55,30 @@ function drawContainedImage(ctx: CanvasRenderingContext2D, image: HTMLImageEleme
   ctx.drawImage(image, x + (w - width) / 2, y + (h - height) / 2, width, height);
 }
 
-function drawTrackedText(ctx: CanvasRenderingContext2D, text: string, centerX: number, y: number, maxWidth: number, start: number, weight: number, tracking: number) {
+function drawTrackedText(ctx: CanvasRenderingContext2D, text: string, centerX: number, y: number, maxWidth: number, start: number, style: TextStyle, tracking: number) {
   let size = start; let widths: number[] = []; let total = 0;
   do {
-    ctx.font = `${weight} ${size}px "Arial Narrow", Arial, Helvetica, sans-serif`;
+    ctx.font = canvasFont(style, size);
     widths = [...text].map((letter) => ctx.measureText(letter).width); total = widths.reduce((sum, width) => sum + width, 0) + tracking * Math.max(0, text.length - 1); size -= 2;
   } while (total > maxWidth && size > 34);
   ctx.textAlign = 'left'; let x = centerX - total / 2;
   [...text].forEach((letter, index) => { ctx.fillText(letter, x, y); x += widths[index] + tracking; });
 }
 
+function drawEmployeeNumber(ctx: CanvasRenderingContext2D, value: string, centerX: number, y: number, style: TextStyle) {
+  const label = 'Emp.No.:'; const number = value || '00000'; const gap = 18;
+  ctx.font = canvasFont(style, 56); const labelWidth = ctx.measureText(label).width;
+  ctx.font = canvasFont(style, 64); const numberWidth = ctx.measureText(number).width;
+  let x = centerX - (labelWidth + gap + numberWidth) / 2;
+  ctx.textAlign = 'left'; ctx.font = canvasFont(style, 56); ctx.fillText(label, x, y);
+  x += labelWidth + gap; ctx.font = canvasFont(style, 64); ctx.fillText(number, x, y);
+}
+
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const templateRef = useRef<HTMLImageElement | null>(null);
   const [details, setDetails] = useState(initialDetails);
+  const [textStyles, setTextStyles] = useState(initialTextStyles);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [signature, setSignature] = useState<HTMLImageElement | null>(null);
@@ -75,8 +101,8 @@ export default function Home() {
 
     ctx.textAlign = 'center';
     if (logo) drawContainedImage(ctx, logo, 360, 330, 1330, 290);
-    else { ctx.fillStyle = '#1668ad'; fitFont(ctx, details.companyName, 1450, 126, 800); ctx.fillText(details.companyName, 1025, 545); }
-    if (details.tagline) { ctx.fillStyle = '#1668ad'; ctx.font = '500 42px Arial'; ctx.fillText(details.tagline.toUpperCase(), 1025, 660); }
+    else { ctx.fillStyle = '#1668ad'; fitFont(ctx, details.companyName, 1450, 126, textStyles.companyName); ctx.fillText(details.companyName, 1025, 545); }
+    if (details.tagline) { ctx.fillStyle = '#1668ad'; ctx.font = canvasFont(textStyles.tagline, 42); ctx.fillText(details.tagline.toUpperCase(), 1025, 660); }
     if (photo) {
       const box = { x: 620, y: 780, w: 808, h: 1040 };
       const scale = Math.max(box.w / photo.width, box.h / photo.height); const width = photo.width * scale; const height = photo.height * scale;
@@ -87,26 +113,29 @@ export default function Home() {
     }
     ctx.strokeStyle = '#494949'; ctx.lineWidth = 10; ctx.strokeRect(610, 770, 828, 1060);
     ctx.fillStyle = '#302e2e'; ctx.textAlign = 'center';
-    drawTrackedText(ctx, details.name.toUpperCase(), 1024, 2025, 1580, 86, 700, 1);
-    ctx.textAlign = 'center'; fitFont(ctx, details.designation, 1450, 62, 700); ctx.fillText(details.designation, 1024, 2166);
-    ctx.font = '500 56px Arial, Helvetica, sans-serif'; ctx.fillText('Emp.No.:', 790, 2296); ctx.font = '700 64px Arial, Helvetica, sans-serif'; ctx.textAlign = 'left'; ctx.fillText(details.employeeNo || '00000', 930, 2296);
-    ctx.font = '600 54px Arial, Helvetica, sans-serif'; ctx.fillText(`D.O.J.: ${formatDate(details.joiningDate)}`, 82, 2496); ctx.fillText(`Blood Group: ${details.bloodGroup || '—'}`, 82, 2612);
+    drawTrackedText(ctx, details.name.toUpperCase(), 1024, 2025, 1580, 86, textStyles.name, 1);
+    ctx.textAlign = 'center'; fitFont(ctx, details.designation, 1450, 62, textStyles.designation); ctx.fillText(details.designation, 1024, 2166);
+    drawEmployeeNumber(ctx, details.employeeNo, 1024, 2296, textStyles.employeeNo);
+    ctx.textAlign = 'left'; ctx.font = canvasFont(textStyles.joiningDate, 54); ctx.fillText(`D.O.J.: ${formatDate(details.joiningDate)}`, 82, 2496);
+    ctx.font = canvasFont(textStyles.bloodGroup, 54); ctx.fillText(`Blood Group: ${details.bloodGroup || '—'}`, 82, 2612);
 
     ctx.textAlign = 'center';
     if (signature) drawContainedImage(ctx, signature, 1390, 2310, 530, 160);
     ctx.fillStyle = '#302e2e';
-    if (details.authorityName) { fitFont(ctx, details.authorityName, 610, 42, 600); ctx.fillText(details.authorityName, 1650, 2545); }
-    ctx.font = '500 46px Arial, Helvetica, sans-serif'; ctx.fillText(details.authorityTitle, 1650, details.authorityName ? 2625 : 2615);
+    if (details.authorityName) { fitFont(ctx, details.authorityName, 610, 42, textStyles.authorityName); ctx.fillText(details.authorityName, 1650, 2545); }
+    ctx.font = canvasFont(textStyles.authorityTitle, 46); ctx.fillText(details.authorityTitle, 1650, details.authorityName ? 2625 : 2615);
 
     ctx.fillStyle = '#1668ad'; ctx.fillRect(95, 2692, 1860, 18);
-    ctx.fillStyle = '#f37032'; fitFont(ctx, details.footerCompanyName, 1750, 68, 700); ctx.fillText(details.footerCompanyName, 1025, 2828);
-    ctx.fillStyle = '#302e2e'; ctx.font = '500 39px Arial, Helvetica, sans-serif';
-    ctx.fillText(details.footerLine1, 1025, 2928); ctx.fillText(details.footerLine2, 1025, 2995); ctx.fillText(details.footerLine3, 1025, 3062);
+    ctx.fillStyle = '#f37032'; fitFont(ctx, details.footerCompanyName, 1750, 68, textStyles.footerCompanyName); ctx.fillText(details.footerCompanyName, 1025, 2828);
+    ctx.fillStyle = '#302e2e'; ctx.font = canvasFont(textStyles.footerLine1, 39); ctx.fillText(details.footerLine1, 1025, 2928);
+    ctx.font = canvasFont(textStyles.footerLine2, 39); ctx.fillText(details.footerLine2, 1025, 2995);
+    ctx.font = canvasFont(textStyles.footerLine3, 39); ctx.fillText(details.footerLine3, 1025, 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
-    ctx.fillStyle = '#fff'; fitFont(ctx, details.website, 1750, 64, 700); ctx.fillText(details.website, 1025, 3258);
-  }, [details, photo, logo, signature, ready]);
+    ctx.fillStyle = '#fff'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
+  }, [details, textStyles, photo, logo, signature, ready]);
 
   const update = (key: keyof Details) => (event: ChangeEvent<HTMLInputElement>) => setDetails((current) => ({ ...current, [key]: event.target.value }));
+  const typography = (key: StyleKey) => ({ textStyle: textStyles[key], onTextStyleChange: (next: TextStyle) => setTextStyles((current) => ({ ...current, [key]: next })) });
   const clearSampleOnFocus = (key: keyof Details) => (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.currentTarget.value === initialDetails[key]) setDetails((current) => ({ ...current, [key]: '' }));
   };
@@ -168,37 +197,38 @@ export default function Home() {
     </div></header>
     <section className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 lg:grid-cols-[minmax(340px,430px)_minmax(0,1fr)] lg:px-8">
       <form className="h-fit rounded-2xl border border-[#dce5eb] bg-white p-5 shadow-sm" onSubmit={(event) => event.preventDefault()}>
-        <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-[#f37032]">New employee</p><h1 className="mt-1 text-2xl font-bold tracking-tight">Prepare an ID card</h1><p className="mt-2 text-sm leading-6 text-[#667785]">Upload a clear portrait and enter the approved HR details. The card preview updates instantly.</p></div>
+        <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-[#f37032]">New employee</p><h1 className="mt-1 text-2xl font-bold tracking-tight">Prepare an ID card</h1><p className="mt-2 text-sm leading-6 text-[#667785]">Upload a clear portrait and enter the approved HR details. Choose a font and use <strong>B</strong> beside any field to control its printed style.</p></div>
         <div className="mb-5 rounded-xl border border-dashed border-[#9db8cc] bg-[#f5f9fc] p-4"><Label htmlFor="photo" className="flex cursor-pointer items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={21} /></span><span><span className="block text-sm font-bold">Employee photograph <span className="text-[#d94c36]">*</span></span><span className="block text-xs font-normal text-[#6c7e8b]">JPG or PNG · portrait photo recommended</span></span></Label><Input id="photo" required type="file" accept="image/png,image/jpeg" onChange={selectPhoto} className="sr-only" /></div>
         <SectionTitle>Employee details</SectionTitle>
         <div className="grid gap-4">
-          <Field required label="Full name" id="name"><Input required id="name" value={details.name} onFocus={clearSampleOnFocus('name')} onChange={update('name')} maxLength={32} /></Field>
-          <Field required label="Designation" id="designation"><Input required id="designation" value={details.designation} onFocus={clearSampleOnFocus('designation')} onChange={update('designation')} maxLength={42} /></Field>
-          <div className="grid grid-cols-2 gap-3"><Field required label="Employee number" id="employeeNo"><Input required id="employeeNo" value={details.employeeNo} onFocus={clearSampleOnFocus('employeeNo')} onChange={update('employeeNo')} maxLength={14} /></Field><Field required label="Date of joining" id="joiningDate"><Input required id="joiningDate" type="date" value={details.joiningDate} onFocus={clearSampleOnFocus('joiningDate')} onChange={update('joiningDate')} /></Field></div>
-          <Field required label="Blood group" id="bloodGroup"><Input required id="bloodGroup" value={details.bloodGroup} onFocus={clearSampleOnFocus('bloodGroup')} onChange={update('bloodGroup')} placeholder="e.g. B+ve" maxLength={8} /></Field>
+          <Field required label="Full name" id="name" {...typography('name')}><Input required id="name" value={details.name} onFocus={clearSampleOnFocus('name')} onChange={update('name')} maxLength={32} /></Field>
+          <Field required label="Designation" id="designation" {...typography('designation')}><Input required id="designation" value={details.designation} onFocus={clearSampleOnFocus('designation')} onChange={update('designation')} maxLength={42} /></Field>
+          <Field required label="Employee number" id="employeeNo" {...typography('employeeNo')}><Input required id="employeeNo" value={details.employeeNo} onFocus={clearSampleOnFocus('employeeNo')} onChange={update('employeeNo')} maxLength={14} /></Field>
+          <Field required label="Date of joining" id="joiningDate" {...typography('joiningDate')}><Input required id="joiningDate" type="date" value={details.joiningDate} onFocus={clearSampleOnFocus('joiningDate')} onChange={update('joiningDate')} /></Field>
+          <Field required label="Blood group" id="bloodGroup" {...typography('bloodGroup')}><Input required id="bloodGroup" value={details.bloodGroup} onFocus={clearSampleOnFocus('bloodGroup')} onChange={update('bloodGroup')} placeholder="e.g. B+ve" maxLength={8} /></Field>
         </div>
 
         <SectionTitle>Company branding</SectionTitle>
         <div className="grid gap-4">
           <UploadField id="logo" label="Company logo" note="Optional PNG or JPG; company name is used when omitted"><Input id="logo" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setLogo)} className="sr-only" /></UploadField>
-          <Field required label="Company name" id="companyName"><Input required id="companyName" value={details.companyName} onFocus={clearSampleOnFocus('companyName')} onChange={update('companyName')} maxLength={48} /></Field>
-          <Field label="Tagline" id="tagline"><Input id="tagline" value={details.tagline} onFocus={clearSampleOnFocus('tagline')} onChange={update('tagline')} maxLength={50} /></Field>
+          <Field required label="Company name" id="companyName" {...typography('companyName')}><Input required id="companyName" value={details.companyName} onFocus={clearSampleOnFocus('companyName')} onChange={update('companyName')} maxLength={48} /></Field>
+          <Field label="Tagline" id="tagline" {...typography('tagline')}><Input id="tagline" value={details.tagline} onFocus={clearSampleOnFocus('tagline')} onChange={update('tagline')} maxLength={50} /></Field>
         </div>
 
         <SectionTitle>Footer content</SectionTitle>
         <div className="grid gap-4">
-          <Field required label="Footer company name" id="footerCompanyName"><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
-          <Field required label="Address line 1" id="footerLine1"><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={60} /></Field>
-          <Field required label="Address line 2" id="footerLine2"><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={68} /></Field>
-          <Field required label="Address line 3 / phone" id="footerLine3"><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={76} /></Field>
-          <Field required label="Website" id="website"><Input required id="website" value={details.website} onFocus={clearSampleOnFocus('website')} onChange={update('website')} maxLength={55} /></Field>
+          <Field required label="Footer company name" id="footerCompanyName" {...typography('footerCompanyName')}><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
+          <Field required label="Address line 1" id="footerLine1" {...typography('footerLine1')}><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={60} /></Field>
+          <Field required label="Address line 2" id="footerLine2" {...typography('footerLine2')}><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={68} /></Field>
+          <Field required label="Address line 3 / phone" id="footerLine3" {...typography('footerLine3')}><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={76} /></Field>
+          <Field required label="Website" id="website" {...typography('website')}><Input required id="website" value={details.website} onFocus={clearSampleOnFocus('website')} onChange={update('website')} maxLength={55} /></Field>
         </div>
 
         <SectionTitle>Issuing authority</SectionTitle>
         <div className="grid gap-4">
           <UploadField required id="signature" label="Authority signature" note="Transparent PNG recommended"><Input required id="signature" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setSignature)} className="sr-only" /></UploadField>
-          <Field label="Authority name (optional)" id="authorityName"><Input id="authorityName" value={details.authorityName} placeholder="Leave blank to match the original card" onFocus={clearSampleOnFocus('authorityName')} onChange={update('authorityName')} maxLength={34} /></Field>
-          <Field required label="Authority title" id="authorityTitle"><Input required id="authorityTitle" value={details.authorityTitle} onFocus={clearSampleOnFocus('authorityTitle')} onChange={update('authorityTitle')} maxLength={30} /></Field>
+          <Field label="Authority name (optional)" id="authorityName" {...typography('authorityName')}><Input id="authorityName" value={details.authorityName} placeholder="Leave blank to match the original card" onFocus={clearSampleOnFocus('authorityName')} onChange={update('authorityName')} maxLength={34} /></Field>
+          <Field required label="Authority title" id="authorityTitle" {...typography('authorityTitle')}><Input required id="authorityTitle" value={details.authorityTitle} onFocus={clearSampleOnFocus('authorityTitle')} onChange={update('authorityTitle')} maxLength={30} /></Field>
         </div>
         {notice && <Alert variant={notice.kind === 'error' ? 'destructive' : 'default'} className={`mt-5 ${notice.kind === 'success' ? 'border-[#9ed4bf] bg-[#f0faf6] text-[#176a4d]' : ''}`}>{notice.kind === 'success' ? <CheckCircle2 /> : <TriangleAlert />}<AlertDescription>{notice.message}</AlertDescription></Alert>}
         <div className="mt-6 grid grid-cols-[1fr_auto] gap-3"><Button type="button" onClick={downloadPdf} disabled={!ready || exporting !== null} className="h-11 bg-[#f37032] font-semibold text-white hover:bg-[#d95f25]"><Download size={17} /> {exporting === 'pdf' ? 'Preparing PDF…' : 'Download print PDF'}</Button><Button type="button" onClick={printCard} disabled={!ready || exporting !== null} variant="outline" className="h-11 px-3" aria-label="Print ID card"><Printer size={17} /></Button></div>
@@ -209,6 +239,6 @@ export default function Home() {
   </main>;
 }
 
-function Field({ label, id, children, required = false }: { label: string; id: string; children: React.ReactNode; required?: boolean }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label>{children}</div>; }
+function Field({ label, id, children, required = false, textStyle, onTextStyleChange }: { label: string; id: string; children: React.ReactNode; required?: boolean; textStyle?: TextStyle; onTextStyleChange?: (style: TextStyle) => void }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label><div className="grid grid-cols-[minmax(0,1fr)_118px_40px] gap-2">{children}{textStyle && onTextStyleChange && <><NativeSelect aria-label={`${label} font`} value={textStyle.font} onChange={(event) => onTextStyleChange({ ...textStyle, font: event.target.value as FontChoice })} className="h-9 text-xs">{fontChoices.map((font) => <NativeSelectOption key={font} value={font}>{font}</NativeSelectOption>)}</NativeSelect><Button type="button" variant={textStyle.bold ? 'default' : 'outline'} size="icon" aria-label={`${textStyle.bold ? 'Remove bold from' : 'Make bold'} ${label}`} aria-pressed={textStyle.bold} onClick={() => onTextStyleChange({ ...textStyle, bold: !textStyle.bold })} className={`h-9 w-10 text-base font-black ${textStyle.bold ? 'bg-[#1668ad] text-white hover:bg-[#12558d]' : ''}`}>B</Button></>}</div></div>; }
 function SectionTitle({ children }: { children: React.ReactNode }) { return <div className="mb-3 mt-6 flex items-center gap-3"><h2 className="whitespace-nowrap text-xs font-bold uppercase tracking-[.13em] text-[#1668ad]">{children}</h2><span className="h-px w-full bg-[#dce5eb]" /></div>; }
 function UploadField({ id, label, note, children, required = false }: { id: string; label: string; note: string; children: React.ReactNode; required?: boolean }) { return <div className="rounded-xl border border-dashed border-[#b8cad7] bg-[#f8fafc] p-3"><Label htmlFor={id} className="flex cursor-pointer items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={18} /></span><span><span className={required ? 'block text-xs font-bold text-[#263f51]' : 'block text-xs font-semibold text-[#425767]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</span><span className="block text-[11px] font-normal text-[#70818d]">{note}</span></span></Label>{children}</div>; }
