@@ -87,6 +87,7 @@ export default function Home() {
   const templateRef = useRef<HTMLImageElement | null>(null);
   const [details, setDetails] = useState(initialDetails);
   const [textStyles, setTextStyles] = useState(initialTextStyles);
+  const [footerCompanyColor, setFooterCompanyColor] = useState('#f37032');
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [signature, setSignature] = useState<HTMLImageElement | null>(null);
@@ -134,13 +135,13 @@ export default function Home() {
     ctx.font = canvasFont(textStyles.authorityTitle, 46); ctx.fillText(details.authorityTitle, 1650, details.authorityName ? 2630 : 2610);
 
     ctx.fillStyle = '#1668ad'; ctx.fillRect(95, 2692, 1860, 18);
-    ctx.fillStyle = '#f37032'; fitFont(ctx, details.footerCompanyName, 1750, 68, textStyles.footerCompanyName); ctx.fillText(details.footerCompanyName, 1025, 2828);
+    ctx.fillStyle = footerCompanyColor; fitFont(ctx, details.footerCompanyName, 1750, 68, textStyles.footerCompanyName); ctx.fillText(details.footerCompanyName, 1025, 2828);
     ctx.fillStyle = '#302e2e'; fitFont(ctx, details.footerLine1, 1900, 39, textStyles.footerLine1, 26); ctx.fillText(details.footerLine1, 1025, 2928);
     fitFont(ctx, details.footerLine2, 1900, 39, textStyles.footerLine2, 26); ctx.fillText(details.footerLine2, 1025, 2995);
     fitFont(ctx, details.footerLine3, 1900, 39, textStyles.footerLine3, 26); ctx.fillText(details.footerLine3, 1025, 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
     ctx.fillStyle = '#fff'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
-  }, [details, textStyles, photo, logo, signature, ready]);
+  }, [details, textStyles, footerCompanyColor, photo, logo, signature, ready]);
 
   const update = (key: keyof Details) => (event: ChangeEvent<HTMLInputElement>) => setDetails((current) => ({ ...current, [key]: event.target.value }));
   const typography = (key: StyleKey) => ({ textStyle: textStyles[key], onTextStyleChange: (next: TextStyle) => setTextStyles((current) => ({ ...current, [key]: next })) });
@@ -225,7 +226,7 @@ export default function Home() {
 
         <SectionTitle>Footer content</SectionTitle>
         <div className="grid gap-4">
-          <Field required label="Footer company name" id="footerCompanyName" {...typography('footerCompanyName')}><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
+          <Field required label="Footer company name" id="footerCompanyName" color={footerCompanyColor} onColorChange={setFooterCompanyColor} {...typography('footerCompanyName')}><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
           <Field required label="Address line 1" id="footerLine1" {...typography('footerLine1')}><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={60} /></Field>
           <Field required label="Address line 2" id="footerLine2" {...typography('footerLine2')}><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={68} /></Field>
           <Field required label="Address line 3 / phone" id="footerLine3" {...typography('footerLine3')}><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={76} /></Field>
@@ -247,6 +248,6 @@ export default function Home() {
   </main>;
 }
 
-function Field({ label, id, children, required = false, textStyle, onTextStyleChange }: { label: string; id: string; children: React.ReactNode; required?: boolean; textStyle?: TextStyle; onTextStyleChange?: (style: TextStyle) => void }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label><div className="grid grid-cols-[minmax(0,1fr)_118px_40px] gap-2">{children}{textStyle && onTextStyleChange && <><NativeSelect aria-label={`${label} font`} value={textStyle.font} onChange={(event) => onTextStyleChange({ ...textStyle, font: event.target.value as FontChoice })} className="h-9 text-xs">{fontChoices.map((font) => <NativeSelectOption key={font} value={font}>{font}</NativeSelectOption>)}</NativeSelect><Button type="button" variant={textStyle.bold ? 'default' : 'outline'} size="icon" aria-label={`${textStyle.bold ? 'Remove bold from' : 'Make bold'} ${label}`} aria-pressed={textStyle.bold} onClick={() => onTextStyleChange({ ...textStyle, bold: !textStyle.bold })} className={`h-9 w-10 text-base font-black ${textStyle.bold ? 'bg-[#1668ad] text-white hover:bg-[#12558d]' : ''}`}>B</Button></>}</div></div>; }
+function Field({ label, id, children, required = false, textStyle, onTextStyleChange, color, onColorChange }: { label: string; id: string; children: React.ReactNode; required?: boolean; textStyle?: TextStyle; onTextStyleChange?: (style: TextStyle) => void; color?: string; onColorChange?: (color: string) => void }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label><div className={`grid gap-2 ${color && onColorChange ? 'grid-cols-[minmax(0,1fr)_110px_40px_40px]' : 'grid-cols-[minmax(0,1fr)_118px_40px]'}`}>{children}{textStyle && onTextStyleChange && <><NativeSelect aria-label={`${label} font`} value={textStyle.font} onChange={(event) => onTextStyleChange({ ...textStyle, font: event.target.value as FontChoice })} className="h-9 text-xs">{fontChoices.map((font) => <NativeSelectOption key={font} value={font}>{font}</NativeSelectOption>)}</NativeSelect><Button type="button" variant={textStyle.bold ? 'default' : 'outline'} size="icon" aria-label={`${textStyle.bold ? 'Remove bold from' : 'Make bold'} ${label}`} aria-pressed={textStyle.bold} onClick={() => onTextStyleChange({ ...textStyle, bold: !textStyle.bold })} className={`h-9 w-10 text-base font-black ${textStyle.bold ? 'bg-[#1668ad] text-white hover:bg-[#12558d]' : ''}`}>B</Button></>}{color && onColorChange && <Input type="color" value={color} onChange={(event) => onColorChange(event.target.value)} aria-label={`${label} color`} title="Choose footer company-name color" className="h-9 w-10 cursor-pointer p-1" />}</div></div>; }
 function SectionTitle({ children }: { children: React.ReactNode }) { return <div className="mb-3 mt-6 flex items-center gap-3"><h2 className="whitespace-nowrap text-xs font-bold uppercase tracking-[.13em] text-[#1668ad]">{children}</h2><span className="h-px w-full bg-[#dce5eb]" /></div>; }
 function UploadField({ id, label, note, children, required = false }: { id: string; label: string; note: string; children: React.ReactNode; required?: boolean }) { return <div className="rounded-xl border border-dashed border-[#b8cad7] bg-[#f8fafc] p-3"><Label htmlFor={id} className="flex cursor-pointer items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={18} /></span><span><span className={required ? 'block text-xs font-bold text-[#263f51]' : 'block text-xs font-semibold text-[#425767]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</span><span className="block text-[11px] font-normal text-[#70818d]">{note}</span></span></Label>{children}</div>; }
