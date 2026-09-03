@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
+import { companyProfiles, defaultCompanyProfile, type CompanyProfile } from '@/data/company-profiles';
 
 type Details = {
   name: string; designation: string; employeeNo: string; joiningDate: string; bloodGroup: string;
@@ -24,10 +25,10 @@ const fontChoices: FontChoice[] = ['Arial', 'Arial Narrow', 'Helvetica', 'Verdan
 const fontSizes = [24, 28, 32, 36, 40, 44, 48, 52];
 const initialDetails: Details = {
   name: 'EMPLOYEE NAME', designation: 'Job Designation', employeeNo: '00000', joiningDate: '2025-03-10', bloodGroup: 'B+ve',
-  companyName: 'Caprus IT Private Limited', tagline: 'UNLOCKING SMART SOLUTIONS',
-  footerCompanyName: 'Caprus IT Private Limited', footerLine1: '2nd Floor, New Mark House,',
-  footerLine2: 'Plot Nos 48 to 51 & 54 to 57 of Survey Number 78,', footerLine3: 'Patrika Nagar, Madhapur, Hyd-81, TS. Ph: 040-4120 7879',
-  website: 'www.caprusit.com', authorityName: '', authorityTitle: 'Issuing Authority',
+  companyName: defaultCompanyProfile.companyName, tagline: defaultCompanyProfile.tagline,
+  footerCompanyName: defaultCompanyProfile.footerCompanyName, footerLine1: defaultCompanyProfile.footerLine1,
+  footerLine2: defaultCompanyProfile.footerLine2, footerLine3: defaultCompanyProfile.footerLine3,
+  website: defaultCompanyProfile.website, authorityName: defaultCompanyProfile.authorityName, authorityTitle: defaultCompanyProfile.authorityTitle,
 };
 const initialTextStyles: Record<StyleKey, TextStyle> = {
   name: { font: 'Arial Narrow', bold: true }, designation: { font: 'Arial', bold: true },
@@ -89,11 +90,12 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const templateRef = useRef<HTMLImageElement | null>(null);
   const [details, setDetails] = useState(initialDetails);
+  const [selectedCompany, setSelectedCompany] = useState(defaultCompanyProfile.id);
   const [textStyles, setTextStyles] = useState(initialTextStyles);
   const [addressLayouts, setAddressLayouts] = useState<Record<AddressKey, AddressLayout>>({
     footerLine1: { size: 44, align: 'center' }, footerLine2: { size: 44, align: 'left' }, footerLine3: { size: 44, align: 'left' },
   });
-  const [footerCompanyColor, setFooterCompanyColor] = useState('#f37032');
+  const [footerCompanyColor, setFooterCompanyColor] = useState(defaultCompanyProfile.footerCompanyColor);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [signature, setSignature] = useState<HTMLImageElement | null>(null);
@@ -166,6 +168,17 @@ export default function Home() {
       image.onload = () => { setter(image); URL.revokeObjectURL(url); }; image.src = url;
     };
   }
+  function loadProfileArtwork(path: string | null, setter: (image: HTMLImageElement | null) => void) {
+    if (!path) { setter(null); return; }
+    const image = new Image(); image.onload = () => setter(image); image.onerror = () => setter(null); image.src = path;
+  }
+  function selectCompany(profileId: string) {
+    const profile = companyProfiles.find((item) => item.id === profileId); if (!profile) return;
+    setSelectedCompany(profile.id);
+    setDetails((current) => ({ ...current, companyName: profile.companyName, tagline: profile.tagline, footerCompanyName: profile.footerCompanyName, footerLine1: profile.footerLine1, footerLine2: profile.footerLine2, footerLine3: profile.footerLine3, website: profile.website, authorityName: profile.authorityName, authorityTitle: profile.authorityTitle }));
+    setFooterCompanyColor(profile.footerCompanyColor);
+    loadProfileArtwork(profile.logoPath, setLogo); loadProfileArtwork(profile.signaturePath, setSignature);
+  }
   function downloadPdf() {
     const canvas = canvasRef.current;
     if (!canvas || !ready) return;
@@ -232,6 +245,7 @@ export default function Home() {
     <section className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 lg:grid-cols-[minmax(340px,430px)_minmax(0,1fr)] lg:px-8">
       <form className="h-fit rounded-2xl border border-[#dce5eb] bg-white p-5 shadow-sm" onSubmit={(event) => event.preventDefault()}>
         <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-[#f37032]">New employee</p><h1 className="mt-1 text-2xl font-bold tracking-tight">Prepare an ID card</h1><p className="mt-2 text-sm leading-6 text-[#667785]">Upload a clear portrait and enter the approved HR details. Choose a font and use <strong>B</strong> beside any field to control its printed style.</p></div>
+        <div className="mb-5 grid gap-1.5"><Label htmlFor="companyProfile" className="text-xs font-bold text-[#263f51]">Company <span className="text-[#d94c36]">*</span></Label><NativeSelect id="companyProfile" aria-label="Company profile" value={selectedCompany} onChange={(event) => selectCompany(event.target.value)} className="h-11 font-semibold">{companyProfiles.map((profile: CompanyProfile) => <NativeSelectOption key={profile.id} value={profile.id}>{profile.label}</NativeSelectOption>)}</NativeSelect><p className="text-[11px] text-[#70818d]">Loads the saved company branding, address, website, and issuing authority.</p></div>
         <div className="mb-5 rounded-xl border border-dashed border-[#9db8cc] bg-[#f5f9fc] p-4"><Label htmlFor="photo" className="flex cursor-pointer items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={21} /></span><span><span className="block text-sm font-bold">Employee photograph <span className="text-[#d94c36]">*</span></span><span className="block text-xs font-normal text-[#6c7e8b]">JPG or PNG · portrait photo recommended</span></span></Label><Input id="photo" required type="file" accept="image/png,image/jpeg" onChange={selectPhoto} className="sr-only" /></div>
         <SectionTitle>Employee details</SectionTitle>
         <div className="grid gap-4">
