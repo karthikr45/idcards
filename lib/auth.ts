@@ -1,12 +1,17 @@
 const cookieName = 'caprus_id_session';
 const sessionLifetimeSeconds = 8 * 60 * 60;
 
+export function getRuntimeEnv(key: 'AUTH_USERNAME' | 'AUTH_PASSWORD' | 'AUTH_SESSION_SECRET') {
+  const netlify = (globalThis as typeof globalThis & { Netlify?: { env?: { get(name: string): string | undefined } } }).Netlify;
+  return netlify?.env?.get(key) ?? (typeof process !== 'undefined' ? process.env[key] : undefined);
+}
+
 function encode(value: string) {
   return btoa(value).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
 async function sign(value: string) {
-  const secret = process.env.AUTH_SESSION_SECRET;
+  const secret = getRuntimeEnv('AUTH_SESSION_SECRET');
   if (!secret) throw new Error('AUTH_SESSION_SECRET is not configured');
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   return encode(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(value)))));
@@ -25,7 +30,7 @@ export async function isValidSession(request: Request) {
   if (!payload || !signature || signature !== await sign(payload)) return false;
   try {
     const decoded = JSON.parse(atob(payload.replaceAll('-', '+').replaceAll('_', '/')));
-    return decoded.username === process.env.AUTH_USERNAME && decoded.expiresAt > Date.now();
+    return decoded.username === getRuntimeEnv('AUTH_USERNAME') && decoded.expiresAt > Date.now();
   } catch { return false; }
 }
 

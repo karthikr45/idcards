@@ -1,10 +1,12 @@
-import { createSessionToken, sessionCookie } from '@/lib/auth';
+import { createSessionToken, getRuntimeEnv, sessionCookie } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json() as { username?: string; password?: string };
-    if (!process.env.AUTH_USERNAME || !process.env.AUTH_PASSWORD) return Response.json({ error: 'Login is not configured.' }, { status: 503 });
-    if (username !== process.env.AUTH_USERNAME || password !== process.env.AUTH_PASSWORD) {
+    const configuredUsername = getRuntimeEnv('AUTH_USERNAME');
+    const configuredPassword = getRuntimeEnv('AUTH_PASSWORD');
+    if (!configuredUsername || !configuredPassword) return Response.json({ error: 'Login is not configured.' }, { status: 503 });
+    if (username !== configuredUsername || password !== configuredPassword) {
       return Response.json({ error: 'Incorrect username or password.' }, { status: 401 });
     }
     const token = await createSessionToken(username);
