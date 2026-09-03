@@ -1,7 +1,7 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Download, IdCard, ImagePlus, Printer, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { CheckCircle2, Download, Eye, EyeOff, IdCard, ImagePlus, LoaderCircle, LockKeyhole, LogIn, LogOut, Printer, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -106,6 +106,16 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'png' | 'print' | null>(null);
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
+  const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'anonymous'>('checking');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/session', { cache: 'no-store' }).then((response) => response.json()).then((result) => setAuthStatus(result.authenticated ? 'authenticated' : 'anonymous')).catch(() => setAuthStatus('anonymous'));
+  }, []);
 
   useEffect(() => {
     const image = new Image(); image.src = '/id-card-template.png';
@@ -254,10 +264,45 @@ export default function Home() {
     } finally { setExporting(null); }
   }
 
+  async function signIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setSigningIn(true); setLoginError('');
+    try {
+      const response = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      const result = await response.json();
+      if (!response.ok) { setLoginError(result.error || 'Unable to sign in.'); return; }
+      setPassword(''); setAuthStatus('authenticated');
+    } catch { setLoginError('Unable to connect. Please try again.'); }
+    finally { setSigningIn(false); }
+  }
+
+  async function signOut() {
+    await fetch('/api/logout', { method: 'POST' });
+    setUsername(''); setPassword(''); setAuthStatus('anonymous');
+  }
+
+  if (authStatus === 'checking') return <main className="grid min-h-screen place-items-center bg-[#f1f5f8]"><div className="flex items-center gap-3 text-sm font-semibold text-[#4f6473]"><LoaderCircle className="animate-spin text-[#1668ad]" size={20} /> Securing workspace…</div></main>;
+
+  if (authStatus === 'anonymous') return <main className="grid min-h-screen place-items-center bg-[radial-gradient(circle_at_top,#eaf3f9_0,#f1f5f8_48%,#e7edf1_100%)] px-4 py-10 text-[#17222d]">
+    <section className="w-full max-w-[430px] overflow-hidden rounded-3xl border border-[#d7e1e8] bg-white shadow-[0_28px_90px_rgba(29,52,69,.18)]">
+      <div className="h-2 bg-gradient-to-r from-[#1668ad] via-[#2b7eba] to-[#f37032]" />
+      <div className="p-7 sm:p-9">
+        <div className="mb-7 flex items-center gap-3"><span className="grid size-12 place-items-center rounded-2xl bg-[#1668ad] text-white shadow-sm"><IdCard size={25} /></span><div><h1 className="text-xl font-bold tracking-tight">Caprus ID Studio</h1><p className="text-sm text-[#647585]">Authorized HR access</p></div></div>
+        <div className="mb-6"><span className="mb-4 grid size-11 place-items-center rounded-xl bg-[#edf5fa] text-[#1668ad]"><LockKeyhole size={22} /></span><h2 className="text-2xl font-bold tracking-tight">Sign in to continue</h2><p className="mt-2 text-sm leading-6 text-[#667785]">Enter your HR workspace credentials to prepare and export employee ID cards.</p></div>
+        <form onSubmit={signIn} className="grid gap-4">
+          <div className="grid gap-1.5"><Label htmlFor="loginUsername" className="text-xs font-bold text-[#263f51]">Username</Label><div className="relative"><UserRound className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#718491]" size={17} /><Input id="loginUsername" autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} className="h-11 pl-10" /></div></div>
+          <div className="grid gap-1.5"><Label htmlFor="loginPassword" className="text-xs font-bold text-[#263f51]">Password</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#718491]" size={17} /><Input id="loginPassword" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="h-11 px-10" /><button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#607583] hover:text-[#1668ad]" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
+          {loginError && <Alert variant="destructive"><TriangleAlert /><AlertDescription>{loginError}</AlertDescription></Alert>}
+          <Button type="submit" disabled={signingIn} className="mt-1 h-11 bg-[#1668ad] font-bold text-white hover:bg-[#12558d]">{signingIn ? <LoaderCircle className="animate-spin" size={18} /> : <LogIn size={18} />}{signingIn ? 'Signing in…' : 'Sign in'}</Button>
+        </form>
+        <p className="mt-6 flex items-center justify-center gap-2 text-xs text-[#71818d]"><ShieldCheck size={15} className="text-[#1e8b66]" /> Secure, browser-based HR workspace</p>
+      </div>
+    </section>
+  </main>;
+
   return <main className="min-h-screen bg-[#f1f5f8] text-[#17222d]">
     <header className="border-b border-[#dce5eb] bg-white px-5 py-4 sm:px-8"><div className="mx-auto flex max-w-[1440px] items-center justify-between">
       <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-[#1668ad] text-white"><IdCard size={22} /></span><div><p className="text-lg font-bold tracking-tight">Caprus ID Studio</p><p className="text-xs text-[#647585]">HR card preparation workspace</p></div></div>
-      <div className="hidden items-center gap-2 text-sm font-medium text-[#4f6473] sm:flex"><ShieldCheck size={17} className="text-[#1e8b66]" /> Process locally in your browser</div>
+      <div className="flex items-center gap-3"><div className="hidden items-center gap-2 text-sm font-medium text-[#4f6473] sm:flex"><ShieldCheck size={17} className="text-[#1e8b66]" /> Process locally in your browser</div><Button type="button" variant="outline" onClick={signOut} className="h-9"><LogOut size={16} /> <span className="hidden sm:inline">Sign out</span></Button></div>
     </div></header>
     <section className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 lg:grid-cols-[minmax(340px,430px)_minmax(0,1fr)] lg:px-8">
       <form className="h-fit rounded-2xl border border-[#dce5eb] bg-white p-5 shadow-sm" onSubmit={(event) => event.preventDefault()}>
