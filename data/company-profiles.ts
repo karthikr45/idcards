@@ -34,7 +34,7 @@ export const companyProfiles: CompanyProfile[] = [
   {
     id: 'caprus-it', label: 'Caprus IT', companyName: 'Caprus IT Private Limited', tagline: '', footerCompanyName: 'Caprus IT Private Limited',
     footerLine1: '2nd Floor, New Mark House,', footerLine2: 'Plot Nos 48 to 51 & 54 to 57 of Survey Number 78,',
-    footerLine3: 'Patrika Nagar, Madhapur, Hyderabad-500 081, Telangana, India.', website: 'www.caprusit.com', authorityName: '', authorityTitle: 'Issuing Authority',
+    footerLine3: 'Patrika Nagar, Madhapur, Hyd-81, TS. Ph: 040-41207879 ', website: 'www.caprusit.com', authorityName: '', authorityTitle: 'Issuing Authority',
     footerCompanyColor: '#f37032', logoPath: '/companies/caprus-it-logo.png', signaturePath: sharedAuthoritySignaturePath,
   },
   {
