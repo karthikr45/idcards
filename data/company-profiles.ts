@@ -20,8 +20,9 @@ export const sharedAuthoritySignaturePath = '/companies/shared-authority-signatu
 // Add or update a company once here; the form and print card use the same profile.
 export const companyProfiles: CompanyProfile[] = [
   {
-    id: 'aauti', label: 'Aauti', companyName: 'Aauti', tagline: '', footerCompanyName: 'Aauti',
-    footerLine1: '', footerLine2: '', footerLine3: '', website: '', authorityName: '', authorityTitle: 'Issuing Authority',
+    id: 'aauti', label: 'Aauti', companyName: 'Aauti', tagline: '', footerCompanyName: 'Caprus IT Private Limited',
+    footerLine1: '2nd Floor, New Mark House,', footerLine2: 'Plot Nos 48 to 51 & 54 to 57 of Survey Number 78,',
+    footerLine3: 'Patrika Nagar, Madhapur, Hyderabad-500 081, Telangana, India.', website: '', authorityName: '', authorityTitle: 'Issuing Authority',
     footerCompanyColor: '#007bff', logoPath: '/companies/aauti-logo.svg', signaturePath: sharedAuthoritySignaturePath,
   },
   {
