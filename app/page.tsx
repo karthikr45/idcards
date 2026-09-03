@@ -35,7 +35,7 @@ const initialTextStyles: Record<StyleKey, TextStyle> = {
 };
 
 function canvasFont(style: TextStyle, size: number, weight?: number) {
-  return `${weight ?? (style.bold ? 800 : 400)} ${size}px "${style.font}", Arial, Helvetica, sans-serif`;
+  return `${weight ?? (style.bold ? 900 : 400)} ${size}px "${style.font}", Arial, Helvetica, sans-serif`;
 }
 
 function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, style: TextStyle, minimum = 34) {
