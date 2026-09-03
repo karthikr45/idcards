@@ -18,7 +18,10 @@ type Details = {
 type FontChoice = 'Arial' | 'Arial Narrow' | 'Helvetica' | 'Verdana' | 'Georgia' | 'Times New Roman';
 type TextStyle = { font: FontChoice; bold: boolean };
 type StyleKey = keyof Details;
+type AddressKey = 'footerLine1' | 'footerLine2' | 'footerLine3';
+type AddressLayout = { size: number; align: 'left' | 'center' | 'right' };
 const fontChoices: FontChoice[] = ['Arial', 'Arial Narrow', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman'];
+const fontSizes = [24, 28, 32, 36, 40, 44, 48, 52];
 const initialDetails: Details = {
   name: 'EMPLOYEE NAME', designation: 'Job Designation', employeeNo: '00000', joiningDate: '2025-03-10', bloodGroup: 'B+ve',
   companyName: 'Caprus IT Private Limited', tagline: 'UNLOCKING SMART SOLUTIONS',
@@ -41,16 +44,6 @@ function canvasFont(style: TextStyle, size: number, weight?: number) {
 function fitFont(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, start: number, style: TextStyle, minimum = 34) {
   let size = start;
   do { ctx.font = canvasFont(style, size); size -= 2; } while (ctx.measureText(text).width > maxWidth && size > minimum);
-}
-
-function sharedFontSize(ctx: CanvasRenderingContext2D, lines: Array<{ text: string; style: TextStyle }>, maxWidth: number, start: number, minimum: number) {
-  let size = start;
-  while (size > minimum) {
-    const allFit = lines.every((line) => { ctx.font = canvasFont(line.style, size); return ctx.measureText(line.text).width <= maxWidth; });
-    if (allFit) return size;
-    size -= 1;
-  }
-  return minimum;
 }
 
 function formatDate(value: string) {
@@ -97,6 +90,9 @@ export default function Home() {
   const templateRef = useRef<HTMLImageElement | null>(null);
   const [details, setDetails] = useState(initialDetails);
   const [textStyles, setTextStyles] = useState(initialTextStyles);
+  const [addressLayouts, setAddressLayouts] = useState<Record<AddressKey, AddressLayout>>({
+    footerLine1: { size: 44, align: 'center' }, footerLine2: { size: 44, align: 'left' }, footerLine3: { size: 44, align: 'left' },
+  });
   const [footerCompanyColor, setFooterCompanyColor] = useState('#f37032');
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [logo, setLogo] = useState<HTMLImageElement | null>(null);
@@ -146,20 +142,17 @@ export default function Home() {
 
     ctx.fillStyle = '#1668ad'; ctx.fillRect(95, 2692, 1860, 18);
     ctx.fillStyle = footerCompanyColor; fitFont(ctx, details.footerCompanyName, 1750, 68, textStyles.footerCompanyName); ctx.fillText(details.footerCompanyName, 1025, 2828);
-    const addressSize = sharedFontSize(ctx, [
-      { text: details.footerLine1, style: textStyles.footerLine1 },
-      { text: details.footerLine2, style: textStyles.footerLine2 },
-      { text: details.footerLine3, style: textStyles.footerLine3 },
-    ], 1990, 44, 28);
-    ctx.fillStyle = '#302e2e'; ctx.textAlign = 'center'; ctx.font = canvasFont(textStyles.footerLine1, addressSize); ctx.fillText(details.footerLine1, 1025, 2928);
-    ctx.textAlign = 'left'; ctx.font = canvasFont(textStyles.footerLine2, addressSize); ctx.fillText(details.footerLine2, 30, 2995);
-    ctx.font = canvasFont(textStyles.footerLine3, addressSize); ctx.fillText(details.footerLine3, 30, 3062);
+    const addressX = (align: AddressLayout['align']) => align === 'left' ? 30 : align === 'right' ? 2020 : 1025;
+    ctx.fillStyle = '#302e2e'; ctx.textAlign = addressLayouts.footerLine1.align; ctx.font = canvasFont(textStyles.footerLine1, addressLayouts.footerLine1.size); ctx.fillText(details.footerLine1, addressX(addressLayouts.footerLine1.align), 2928);
+    ctx.textAlign = addressLayouts.footerLine2.align; ctx.font = canvasFont(textStyles.footerLine2, addressLayouts.footerLine2.size); ctx.fillText(details.footerLine2, addressX(addressLayouts.footerLine2.align), 2995);
+    ctx.textAlign = addressLayouts.footerLine3.align; ctx.font = canvasFont(textStyles.footerLine3, addressLayouts.footerLine3.size); ctx.fillText(details.footerLine3, addressX(addressLayouts.footerLine3.align), 3062);
     ctx.fillStyle = '#1668ad'; ctx.fillRect(0, 3160, 2050, 150);
     ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; fitFont(ctx, details.website, 1750, 64, textStyles.website); ctx.fillText(details.website, 1025, 3258);
-  }, [details, textStyles, footerCompanyColor, photo, logo, signature, ready]);
+  }, [details, textStyles, addressLayouts, footerCompanyColor, photo, logo, signature, ready]);
 
   const update = (key: keyof Details) => (event: ChangeEvent<HTMLInputElement>) => setDetails((current) => ({ ...current, [key]: event.target.value }));
   const typography = (key: StyleKey) => ({ textStyle: textStyles[key], onTextStyleChange: (next: TextStyle) => setTextStyles((current) => ({ ...current, [key]: next })) });
+  const addressControls = (key: AddressKey) => <AddressControls value={addressLayouts[key]} onChange={(next) => setAddressLayouts((current) => ({ ...current, [key]: next }))} label={key === 'footerLine1' ? 'Address line 1' : key === 'footerLine2' ? 'Address line 2' : 'Address line 3'} />;
   const clearSampleOnFocus = (key: keyof Details) => (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.currentTarget.value === initialDetails[key]) setDetails((current) => ({ ...current, [key]: '' }));
   };
@@ -242,9 +235,9 @@ export default function Home() {
         <SectionTitle>Footer content</SectionTitle>
         <div className="grid gap-4">
           <Field required label="Footer company name" id="footerCompanyName" color={footerCompanyColor} onColorChange={setFooterCompanyColor} {...typography('footerCompanyName')}><Input required id="footerCompanyName" value={details.footerCompanyName} onFocus={clearSampleOnFocus('footerCompanyName')} onChange={update('footerCompanyName')} maxLength={48} /></Field>
-          <Field required label="Address line 1" id="footerLine1" {...typography('footerLine1')}><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={100} /></Field>
-          <Field required label="Address line 2" id="footerLine2" {...typography('footerLine2')}><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={100} /></Field>
-          <Field required label="Address line 3 / phone" id="footerLine3" {...typography('footerLine3')}><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={110} /></Field>
+          <Field required label="Address line 1" id="footerLine1" extraControls={addressControls('footerLine1')} {...typography('footerLine1')}><Input required id="footerLine1" value={details.footerLine1} onFocus={clearSampleOnFocus('footerLine1')} onChange={update('footerLine1')} maxLength={100} /></Field>
+          <Field required label="Address line 2" id="footerLine2" extraControls={addressControls('footerLine2')} {...typography('footerLine2')}><Input required id="footerLine2" value={details.footerLine2} onFocus={clearSampleOnFocus('footerLine2')} onChange={update('footerLine2')} maxLength={100} /></Field>
+          <Field required label="Address line 3 / phone" id="footerLine3" extraControls={addressControls('footerLine3')} {...typography('footerLine3')}><Textarea required id="footerLine3" value={details.footerLine3} onFocus={clearSampleOnFocus('footerLine3')} onChange={(event) => setDetails((current) => ({ ...current, footerLine3: event.target.value.replace(/\n/g, ' ') }))} rows={2} maxLength={110} /></Field>
           <Field required label="Website" id="website" {...typography('website')}><Input required id="website" value={details.website} onFocus={clearSampleOnFocus('website')} onChange={update('website')} maxLength={55} /></Field>
         </div>
 
@@ -263,6 +256,7 @@ export default function Home() {
   </main>;
 }
 
-function Field({ label, id, children, required = false, textStyle, onTextStyleChange, color, onColorChange }: { label: string; id: string; children: React.ReactNode; required?: boolean; textStyle?: TextStyle; onTextStyleChange?: (style: TextStyle) => void; color?: string; onColorChange?: (color: string) => void }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label><div className={`grid gap-2 ${color && onColorChange ? 'grid-cols-[minmax(0,1fr)_110px_40px_40px]' : 'grid-cols-[minmax(0,1fr)_118px_40px]'}`}>{children}{textStyle && onTextStyleChange && <><NativeSelect aria-label={`${label} font`} value={textStyle.font} onChange={(event) => onTextStyleChange({ ...textStyle, font: event.target.value as FontChoice })} className="h-9 text-xs">{fontChoices.map((font) => <NativeSelectOption key={font} value={font}>{font}</NativeSelectOption>)}</NativeSelect><Button type="button" variant={textStyle.bold ? 'default' : 'outline'} size="icon" aria-label={`${textStyle.bold ? 'Remove bold from' : 'Make bold'} ${label}`} aria-pressed={textStyle.bold} onClick={() => onTextStyleChange({ ...textStyle, bold: !textStyle.bold })} className={`h-9 w-10 text-base font-black ${textStyle.bold ? 'bg-[#1668ad] text-white hover:bg-[#12558d]' : ''}`}>B</Button></>}{color && onColorChange && <Input type="color" value={color} onChange={(event) => onColorChange(event.target.value)} aria-label={`${label} color`} title="Choose footer company-name color" className="h-9 w-10 cursor-pointer p-1" />}</div></div>; }
+function Field({ label, id, children, required = false, textStyle, onTextStyleChange, color, onColorChange, extraControls }: { label: string; id: string; children: React.ReactNode; required?: boolean; textStyle?: TextStyle; onTextStyleChange?: (style: TextStyle) => void; color?: string; onColorChange?: (color: string) => void; extraControls?: React.ReactNode }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label><div className={`grid gap-2 ${color && onColorChange ? 'grid-cols-[minmax(0,1fr)_110px_40px_40px]' : 'grid-cols-[minmax(0,1fr)_118px_40px]'}`}>{children}{textStyle && onTextStyleChange && <><NativeSelect aria-label={`${label} font`} value={textStyle.font} onChange={(event) => onTextStyleChange({ ...textStyle, font: event.target.value as FontChoice })} className="h-9 text-xs">{fontChoices.map((font) => <NativeSelectOption key={font} value={font}>{font}</NativeSelectOption>)}</NativeSelect><Button type="button" variant={textStyle.bold ? 'default' : 'outline'} size="icon" aria-label={`${textStyle.bold ? 'Remove bold from' : 'Make bold'} ${label}`} aria-pressed={textStyle.bold} onClick={() => onTextStyleChange({ ...textStyle, bold: !textStyle.bold })} className={`h-9 w-10 text-base font-black ${textStyle.bold ? 'bg-[#1668ad] text-white hover:bg-[#12558d]' : ''}`}>B</Button></>}{color && onColorChange && <Input type="color" value={color} onChange={(event) => onColorChange(event.target.value)} aria-label={`${label} color`} title="Choose footer company-name color" className="h-9 w-10 cursor-pointer p-1" />}</div>{extraControls}</div>; }
+function AddressControls({ value, onChange, label }: { value: AddressLayout; onChange: (value: AddressLayout) => void; label: string }) { return <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#f5f8fa] p-2"><NativeSelect aria-label={`${label} font size`} value={String(value.size)} onChange={(event) => onChange({ ...value, size: Number(event.target.value) })} className="h-8 text-xs">{fontSizes.map((size) => <NativeSelectOption key={size} value={String(size)}>{size}px</NativeSelectOption>)}</NativeSelect><NativeSelect aria-label={`${label} alignment`} value={value.align} onChange={(event) => onChange({ ...value, align: event.target.value as AddressLayout['align'] })} className="h-8 text-xs"><NativeSelectOption value="left">Left</NativeSelectOption><NativeSelectOption value="center">Center</NativeSelectOption><NativeSelectOption value="right">Right</NativeSelectOption></NativeSelect></div>; }
 function SectionTitle({ children }: { children: React.ReactNode }) { return <div className="mb-3 mt-6 flex items-center gap-3"><h2 className="whitespace-nowrap text-xs font-bold uppercase tracking-[.13em] text-[#1668ad]">{children}</h2><span className="h-px w-full bg-[#dce5eb]" /></div>; }
 function UploadField({ id, label, note, children, required = false }: { id: string; label: string; note: string; children: React.ReactNode; required?: boolean }) { return <div className="rounded-xl border border-dashed border-[#b8cad7] bg-[#f8fafc] p-3"><Label htmlFor={id} className="flex cursor-pointer items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={18} /></span><span><span className={required ? 'block text-xs font-bold text-[#263f51]' : 'block text-xs font-semibold text-[#425767]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</span><span className="block text-[11px] font-normal text-[#70818d]">{note}</span></span></Label>{children}</div>; }
