@@ -120,7 +120,7 @@ export default function Home() {
     ctx.drawImage(templateRef.current, 0, 0, 2050, 3310);
     ctx.fillStyle = '#fff';
     ctx.fillRect(250, 285, 1550, 440); ctx.fillRect(610, 770, 828, 1060); ctx.fillRect(210, 1882, 1628, 440);
-    ctx.fillRect(70, 2380, 1260, 285); ctx.fillRect(1300, 2290, 700, 385); ctx.fillRect(0, 2680, 2050, 630);
+    ctx.fillRect(70, 2320, 1260, 345); ctx.fillRect(1300, 2290, 700, 385); ctx.fillRect(0, 2680, 2050, 630);
 
     ctx.textAlign = 'center';
     if (logo) drawContainedImage(ctx, logo, 360, 330, 1330, 290);
