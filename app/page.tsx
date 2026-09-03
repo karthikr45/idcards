@@ -31,11 +31,11 @@ const initialDetails: Details = {
   website: defaultCompanyProfile.website, authorityName: defaultCompanyProfile.authorityName, authorityTitle: defaultCompanyProfile.authorityTitle,
 };
 const initialTextStyles: Record<StyleKey, TextStyle> = {
-  name: { font: 'Arial Narrow', bold: true }, designation: { font: 'Arial', bold: true },
-  employeeNo: { font: 'Arial', bold: true }, joiningDate: { font: 'Arial', bold: true }, bloodGroup: { font: 'Arial', bold: true },
-  companyName: { font: 'Arial', bold: true }, tagline: { font: 'Arial', bold: true },
-  footerCompanyName: { font: 'Arial', bold: true }, footerLine1: { font: 'Arial', bold: true }, footerLine2: { font: 'Arial', bold: true }, footerLine3: { font: 'Arial', bold: true },
-  website: { font: 'Arial', bold: true }, authorityName: { font: 'Arial', bold: true }, authorityTitle: { font: 'Arial', bold: true },
+  name: { font: 'Helvetica', bold: true }, designation: { font: 'Helvetica', bold: true },
+  employeeNo: { font: 'Helvetica', bold: true }, joiningDate: { font: 'Helvetica', bold: true }, bloodGroup: { font: 'Helvetica', bold: true },
+  companyName: { font: 'Helvetica', bold: true }, tagline: { font: 'Helvetica', bold: true },
+  footerCompanyName: { font: 'Helvetica', bold: true }, footerLine1: { font: 'Helvetica', bold: true }, footerLine2: { font: 'Helvetica', bold: true }, footerLine3: { font: 'Helvetica', bold: true },
+  website: { font: 'Helvetica', bold: true }, authorityName: { font: 'Helvetica', bold: true }, authorityTitle: { font: 'Helvetica', bold: true },
 };
 
 function canvasFont(style: TextStyle, size: number, weight?: number) {
@@ -93,12 +93,15 @@ export default function Home() {
   const [selectedCompany, setSelectedCompany] = useState(defaultCompanyProfile.id);
   const [textStyles, setTextStyles] = useState(initialTextStyles);
   const [addressLayouts, setAddressLayouts] = useState<Record<AddressKey, AddressLayout>>({
-    footerLine1: { size: 44, align: 'center' }, footerLine2: { size: 44, align: 'left' }, footerLine3: { size: 44, align: 'left' },
+    footerLine1: { size: 44, align: 'center' }, footerLine2: { size: 44, align: 'center' }, footerLine3: { size: 44, align: 'center' },
   });
   const [footerCompanyColor, setFooterCompanyColor] = useState(defaultCompanyProfile.footerCompanyColor);
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null);
   const [logo, setLogo] = useState<HTMLImageElement | null>(null);
   const [signature, setSignature] = useState<HTMLImageElement | null>(null);
+  const [photoFileName, setPhotoFileName] = useState('No employee photo selected');
+  const [logoFileName, setLogoFileName] = useState('Saved company logo');
+  const [signatureFileName, setSignatureFileName] = useState('Shared authority signature');
   const [ready, setReady] = useState(false);
   const [exporting, setExporting] = useState<'pdf' | 'png' | 'print' | null>(null);
   const [notice, setNotice] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
@@ -161,14 +164,23 @@ export default function Home() {
     if (event.currentTarget.value === initialDetails[key]) setDetails((current) => ({ ...current, [key]: '' }));
   };
   function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]; if (!file) return; const url = URL.createObjectURL(file); const image = new Image();
-    image.onload = () => { setPhoto(image); URL.revokeObjectURL(url); }; image.src = url;
+    const file = event.target.files?.[0]; if (!file) return;
+    loadUploadedArtwork(file, setPhoto, setPhotoFileName);
   }
-  function selectArtwork(setter: (image: HTMLImageElement) => void) {
+  function selectArtwork(setter: (image: HTMLImageElement) => void, setFileName: (name: string) => void) {
     return (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0]; if (!file) return; const url = URL.createObjectURL(file); const image = new Image();
-      image.onload = () => { setter(image); URL.revokeObjectURL(url); }; image.src = url;
+      const file = event.target.files?.[0]; if (!file) return;
+      loadUploadedArtwork(file, setter, setFileName);
     };
+  }
+  function loadUploadedArtwork(file: File, setter: (image: HTMLImageElement) => void, setFileName: (name: string) => void) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => { setter(image); setFileName(file.name); };
+      image.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
   }
   function loadProfileArtwork(path: string | null, setter: (image: HTMLImageElement | null) => void) {
     if (!path) { setter(null); return; }
@@ -180,6 +192,8 @@ export default function Home() {
     setDetails((current) => ({ ...current, companyName: profile.companyName, tagline: profile.tagline, footerCompanyName: profile.footerCompanyName, footerLine1: profile.footerLine1, footerLine2: profile.footerLine2, footerLine3: profile.footerLine3, website: profile.website, authorityName: profile.authorityName, authorityTitle: profile.authorityTitle }));
     setFooterCompanyColor(profile.footerCompanyColor);
     loadProfileArtwork(profile.logoPath, setLogo); loadProfileArtwork(profile.signaturePath, setSignature);
+    setLogoFileName(profile.logoPath ? `${profile.label} saved logo` : 'No saved logo');
+    setSignatureFileName('Shared authority signature');
   }
   function downloadPdf() {
     const canvas = canvasRef.current;
@@ -248,7 +262,7 @@ export default function Home() {
       <form className="h-fit rounded-2xl border border-[#dce5eb] bg-white p-5 shadow-sm" onSubmit={(event) => event.preventDefault()}>
         <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[.14em] text-[#f37032]">New employee</p><h1 className="mt-1 text-2xl font-bold tracking-tight">Prepare an ID card</h1><p className="mt-2 text-sm leading-6 text-[#667785]">Upload a clear portrait and enter the approved HR details. Choose a font and use <strong>B</strong> beside any field to control its printed style.</p></div>
         <div className="mb-5 grid gap-1.5"><Label htmlFor="companyProfile" className="text-xs font-bold text-[#263f51]">Company <span className="text-[#d94c36]">*</span></Label><NativeSelect id="companyProfile" aria-label="Company profile" value={selectedCompany} onChange={(event) => selectCompany(event.target.value)} className="h-11 font-semibold">{companyProfiles.map((profile: CompanyProfile) => <NativeSelectOption key={profile.id} value={profile.id}>{profile.label}</NativeSelectOption>)}</NativeSelect><p className="text-[11px] text-[#70818d]">Loads the saved company branding, address, website, and issuing authority.</p></div>
-        <div className="mb-5 rounded-xl border border-dashed border-[#9db8cc] bg-[#f5f9fc] p-4"><Label htmlFor="photo" className="flex cursor-pointer items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={21} /></span><span><span className="block text-sm font-bold">Employee photograph <span className="text-[#d94c36]">*</span></span><span className="block text-xs font-normal text-[#6c7e8b]">JPG or PNG · portrait photo recommended</span></span></Label><Input id="photo" required type="file" accept="image/png,image/jpeg" onChange={selectPhoto} className="sr-only" /></div>
+        <div className="mb-5"><UploadField required id="photo" label="Employee photograph" note="JPG or PNG · portrait photo recommended" previewSrc={photo?.src} status={photoFileName}><Input id="photo" required type="file" accept="image/png,image/jpeg" onChange={selectPhoto} className="sr-only" /></UploadField></div>
         <SectionTitle>Employee details</SectionTitle>
         <div className="grid gap-4">
           <Field required label="Full name" id="name" {...typography('name')}><Input required id="name" value={details.name} onFocus={clearSampleOnFocus('name')} onChange={update('name')} maxLength={32} /></Field>
@@ -260,7 +274,7 @@ export default function Home() {
 
         <SectionTitle>Company branding</SectionTitle>
         <div className="grid gap-4">
-          <UploadField id="logo" label="Company logo" note="Optional PNG or JPG; company name is used when omitted"><Input id="logo" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setLogo)} className="sr-only" /></UploadField>
+          <UploadField id="logo" label="Company logo" note="PNG or JPG · click to replace" previewSrc={logo?.src} status={logoFileName}><Input id="logo" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setLogo, setLogoFileName)} className="sr-only" /></UploadField>
           <Field required label="Company name" id="companyName" {...typography('companyName')}><Input required id="companyName" value={details.companyName} onFocus={clearSampleOnFocus('companyName')} onChange={update('companyName')} maxLength={48} /></Field>
           <Field label="Tagline" id="tagline" {...typography('tagline')}><Input id="tagline" value={details.tagline} onFocus={clearSampleOnFocus('tagline')} onChange={update('tagline')} maxLength={50} /></Field>
         </div>
@@ -276,7 +290,7 @@ export default function Home() {
 
         <SectionTitle>Issuing authority</SectionTitle>
         <div className="grid gap-4">
-          <UploadField required id="signature" label="Authority signature" note="Transparent PNG recommended"><Input required id="signature" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setSignature)} className="sr-only" /></UploadField>
+          <UploadField required id="signature" label="Authority signature" note="Transparent PNG recommended · click to replace" previewSrc={signature?.src} status={signatureFileName}><Input id="signature" type="file" accept="image/png,image/jpeg" onChange={selectArtwork(setSignature, setSignatureFileName)} className="sr-only" /></UploadField>
           <Field label="Authority name (optional)" id="authorityName" {...typography('authorityName')}><Input id="authorityName" value={details.authorityName} placeholder="Leave blank to match the original card" onFocus={clearSampleOnFocus('authorityName')} onChange={update('authorityName')} maxLength={34} /></Field>
           <Field required label="Authority title" id="authorityTitle" {...typography('authorityTitle')}><Input required id="authorityTitle" value={details.authorityTitle} onFocus={clearSampleOnFocus('authorityTitle')} onChange={update('authorityTitle')} maxLength={30} /></Field>
         </div>
@@ -292,4 +306,4 @@ export default function Home() {
 function Field({ label, id, children, required = false, textStyle, onTextStyleChange, color, onColorChange, extraControls }: { label: string; id: string; children: React.ReactNode; required?: boolean; textStyle?: TextStyle; onTextStyleChange?: (style: TextStyle) => void; color?: string; onColorChange?: (color: string) => void; extraControls?: React.ReactNode }) { return <div className="grid gap-1.5"><Label htmlFor={id} className={required ? 'text-xs font-bold text-[#263f51]' : 'text-xs font-medium text-[#5c7080]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</Label><div className={`grid gap-2 ${color && onColorChange ? 'grid-cols-[minmax(0,1fr)_110px_40px_40px]' : 'grid-cols-[minmax(0,1fr)_118px_40px]'}`}>{children}{textStyle && onTextStyleChange && <><NativeSelect aria-label={`${label} font`} value={textStyle.font} onChange={(event) => onTextStyleChange({ ...textStyle, font: event.target.value as FontChoice })} className="h-9 text-xs">{fontChoices.map((font) => <NativeSelectOption key={font} value={font}>{font}</NativeSelectOption>)}</NativeSelect><Button type="button" variant={textStyle.bold ? 'default' : 'outline'} size="icon" aria-label={`${textStyle.bold ? 'Remove bold from' : 'Make bold'} ${label}`} aria-pressed={textStyle.bold} onClick={() => onTextStyleChange({ ...textStyle, bold: !textStyle.bold })} className={`h-9 w-10 text-base font-black ${textStyle.bold ? 'bg-[#1668ad] text-white hover:bg-[#12558d]' : ''}`}>B</Button></>}{color && onColorChange && <Input type="color" value={color} onChange={(event) => onColorChange(event.target.value)} aria-label={`${label} color`} title="Choose footer company-name color" className="h-9 w-10 cursor-pointer p-1" />}</div>{extraControls}</div>; }
 function AddressControls({ value, onChange, label }: { value: AddressLayout; onChange: (value: AddressLayout) => void; label: string }) { return <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#f5f8fa] p-2"><NativeSelect aria-label={`${label} font size`} value={String(value.size)} onChange={(event) => onChange({ ...value, size: Number(event.target.value) })} className="h-8 text-xs">{fontSizes.map((size) => <NativeSelectOption key={size} value={String(size)}>{size}px</NativeSelectOption>)}</NativeSelect><NativeSelect aria-label={`${label} alignment`} value={value.align} onChange={(event) => onChange({ ...value, align: event.target.value as AddressLayout['align'] })} className="h-8 text-xs"><NativeSelectOption value="left">Left</NativeSelectOption><NativeSelectOption value="center">Center</NativeSelectOption><NativeSelectOption value="right">Right</NativeSelectOption></NativeSelect></div>; }
 function SectionTitle({ children }: { children: React.ReactNode }) { return <div className="mb-3 mt-6 flex items-center gap-3"><h2 className="whitespace-nowrap text-xs font-bold uppercase tracking-[.13em] text-[#1668ad]">{children}</h2><span className="h-px w-full bg-[#dce5eb]" /></div>; }
-function UploadField({ id, label, note, children, required = false }: { id: string; label: string; note: string; children: React.ReactNode; required?: boolean }) { return <div className="rounded-xl border border-dashed border-[#b8cad7] bg-[#f8fafc] p-3"><Label htmlFor={id} className="flex cursor-pointer items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-[#1668ad] shadow-sm"><ImagePlus size={18} /></span><span><span className={required ? 'block text-xs font-bold text-[#263f51]' : 'block text-xs font-semibold text-[#425767]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</span><span className="block text-[11px] font-normal text-[#70818d]">{note}</span></span></Label>{children}</div>; }
+function UploadField({ id, label, note, children, required = false, previewSrc, status }: { id: string; label: string; note: string; children: React.ReactNode; required?: boolean; previewSrc?: string; status: string }) { return <div className="rounded-xl border border-dashed border-[#9db8cc] bg-[#f5f9fc] p-3"><Label htmlFor={id} className="flex cursor-pointer items-center gap-3 rounded-lg focus-within:ring-2 focus-within:ring-[#1668ad]"><span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border border-[#d7e1e8] bg-white text-[#1668ad] shadow-sm">{previewSrc ? <img src={previewSrc} alt={`${label} preview`} className="h-full w-full object-contain p-1" /> : <ImagePlus size={22} />}</span><span className="min-w-0 flex-1"><span className={required ? 'block text-xs font-bold text-[#263f51]' : 'block text-xs font-semibold text-[#425767]'}>{label}{required && <span className="text-[#d94c36]"> *</span>}</span><span className="mt-0.5 block truncate text-[11px] font-medium text-[#1668ad]">{status}</span><span className="mt-1 block text-[11px] font-normal text-[#70818d]">{note}</span><span className="mt-2 inline-flex rounded-md bg-white px-2.5 py-1 text-[11px] font-bold text-[#1668ad] shadow-sm">{previewSrc ? 'Replace image' : 'Choose image'}</span></span></Label>{children}</div>; }

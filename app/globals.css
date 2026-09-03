@@ -14,4 +14,4 @@
   --primary: #1668ad; --primary-foreground: #fff; --secondary: #edf3f7; --secondary-foreground: #263845; --muted: #edf3f7; --muted-foreground: #667785;
   --accent: #e4eef5; --accent-foreground: #15558d; --destructive: #c93737; --border: #d7e1e8; --input: #cdd9e1; --ring: #1668ad; --radius: .75rem;
 }
-@layer base { * { @apply border-border outline-ring/50; } body { @apply bg-background text-foreground; font-family: Arial, Helvetica, sans-serif; } button, input { font: inherit; } }
+@layer base { * { @apply border-border outline-ring/50; } body { @apply bg-background text-foreground; font-family: Helvetica, Arial, sans-serif; } button, input { font: inherit; } }
