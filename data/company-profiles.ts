@@ -22,7 +22,7 @@ export const companyProfiles: CompanyProfile[] = [
   {
     id: 'aauti', label: 'Aauti', companyName: 'Aauti', tagline: '', footerCompanyName: 'Aauti Private Limited',
     footerLine1: '2nd Floor, New Mark House,', footerLine2: 'Plot Nos 48 to 51 & 54 to 57 of Survey Number 78,',
-    footerLine3: 'Patrika Nagar, Madhapur, Hyderabad-500 081, Telangana, India.', website: '', authorityName: '', authorityTitle: 'Issuing Authority',
+    footerLine3: 'Patrika Nagar, Madhapur, Hyderabad-500 081, Telangana, India.', website: 'www.aauti.ai', authorityName: '', authorityTitle: 'Issuing Authority',
     footerCompanyColor: '#007bff', logoPath: '/companies/aauti-logo.svg', signaturePath: sharedAuthoritySignaturePath,
   },
   {
